@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frame Tidy</title>
+<meta name="description" content="A free, open-source app that finds the people in the photos on your Aura frames and removes the ones you choose. It runs on your computer.">
+<style>
+  :root {
+    --bg: #fafaf8; --fg: #1b1b1f; --muted: #5d5d66; --line: #e3e3e0;
+    --card: #ffffff; --accent: #4f46e5; --accent-text: #ffffff; --warn-bg: #fff6e0; --warn-line: #e7c76a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141418; --fg: #ececf0; --muted: #a0a0ab; --line: #2c2c33;
+      --card: #1d1d23; --accent: #8b84ff; --accent-text: #11111a; --warn-bg: #2a2410; --warn-line: #6b5a1c;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 48px 0 8px; }
+  h1 { font-size: 2.2rem; line-height: 1.15; margin: 0 0 8px; }
+  h2 { font-size: 1.3rem; margin: 40px 0 8px; }
+  p, li { margin: 0 0 12px; }
+  ul { padding-left: 1.2em; margin: 0 0 12px; }
+  .lead { font-size: 1.2rem; color: var(--muted); }
+  .cta { margin: 24px 0 8px; }
+  .btn { display: inline-block; background: var(--accent); color: var(--accent-text); text-decoration: none;
+    font-weight: 600; padding: 12px 20px; border-radius: 10px; }
+  .btn:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .soon { color: var(--muted); font-size: .95rem; margin-top: 8px; }
+  figure { margin: 20px 0; }
+  figure img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+  figcaption { color: var(--muted); font-size: .9rem; margin-top: 6px; }
+  .note { background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 10px; padding: 14px 16px; margin: 16px 0; }
+  .note p:last-child { margin-bottom: 0; }
+  a { color: var(--accent); }
+  footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 20px 0 40px; color: var(--muted); font-size: .9rem; }
+  @media (max-width: 480px) { h1 { font-size: 1.8rem; } header { padding-top: 32px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Frame Tidy</h1>
+    <p class="lead">Find the people in the photos on your Aura frames, pick one, and remove their photos. It runs on your computer, and you approve every change.</p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/walensis-labs/frame-tidy/releases/latest">Download for Mac</a>
+      <p class="soon">For Apple-silicon Macs with macOS 14 or later. Free and open source: <a href="https://github.com/walensis-labs/frame-tidy">source on GitHub</a>.</p>
+    </div>
+  </header>
+
+  <main>
+    <h2>What it does</h2>
+    <p>It copies the photos on your Aura frames to your computer, reads the faces there, and groups them into people. You open a person, untick any photo that is not them, and remove the rest from your frames.</p>
+    <p>This is not an Aura product, and Aura has no part in it.</p>
+
+    <h2>Who it is for</h2>
+    <p>People with a lot of photos on one or more Aura frames who want someone gone from them, without hunting for each photo by hand. For now you need to be comfortable installing from a terminal.</p>
+
+    <figure>
+      <img src="img/first-run.png" alt="The first screen of the app: it explains the face model and asks you to agree before downloading it." width="1280" height="800">
+      <figcaption>First run. The face model is downloaded only after you press the button.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="img/photos.png" alt="A grid of photos from two frames, with small badges on photos that are on both." width="1280" height="800">
+      <figcaption>Photos from two frames in one view. Test photos from a public dataset, not real frames.</figcaption>
+    </figure>
+
+    <h2>Removing and putting back</h2>
+    <figure>
+      <img src="img/remove-confirm.png" alt="A dialog asking whether to remove three photos from Aura, listing the frames, and warning that Aura has no trash." width="1280" height="800">
+      <figcaption>Nothing is sent to Aura until you press the red button.</figcaption>
+    </figure>
+    <ul>
+      <li>Removal is permanent on Aura. Aura has no trash.</li>
+      <li>Before a photo is removed, the app saves and checks a full-size copy on your computer. If that fails, it does not remove the photo.</li>
+      <li>You can put a photo back only while Aura still has it, which means it is on another frame. Otherwise you re-add the saved copy with the Aura app.</li>
+    </ul>
+
+    <h2>What stays on your computer</h2>
+    <p>Your photos, your people, and your sign-in. Nothing is uploaded, and there is no server run by this project. Your password goes only to Aura. The app downloads its face model once from InsightFace, and a search model once from Hugging Face, each only after you agree. It checks GitHub for a newer version at most once a day.</p>
+
+    <h2>Using it from a phone</h2>
+    <p>Optional, off by default. Scan a QR code on the computer and use the page from a phone on the same wifi. The connection is not encrypted, so use it only on a home network. You cannot sign in from the phone.</p>
+
+    <h2>The honest limits</h2>
+    <div class="note">
+      <p><strong>It is unofficial.</strong> It uses Aura's undocumented interface. Aura's terms of service (updated May 2021) do not allow automated tools like this one. Use it by your own choice. Aura can change or block that interface at any time, and the app may stop working.</p>
+      <p><strong>The face model has its own licence.</strong> InsightFace says its pretrained models are available for non-commercial research purposes only. The model is not part of this project or its download.</p>
+    </div>
+    <ul>
+      <li>It needs a computer. There is no phone-only way to use it.</li>
+      <li>Face matching makes mistakes, especially between relatives who look alike. Check the photos before you remove them.</li>
+      <li>The macOS app is signed and notarized by Apple. The Windows build has not been tested.</li>
+    </ul>
+  </main>
+
+  <footer>
+    <p>Free and open source (MIT licence for the code). Not made by, endorsed by or connected with Aura.</p>
+  </footer>
+</div>
+</body>
+</html>

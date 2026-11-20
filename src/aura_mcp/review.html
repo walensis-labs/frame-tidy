@@ -1,0 +1,2444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{APP_NAME}}</title>
+<style>
+  :root {
+    --bg: #fafaf9; --bg-2: #f4f4f2; --panel: rgba(255,255,255,.72); --panel-solid: #ffffff;
+    --card: #ffffff; --text: #18181b; --muted: #71717a; --faint: #a1a1aa;
+    --line: #e7e5e4; --line-strong: #d6d3d1;
+    --accent: #4f46e5; --accent-hover: #4338ca; --accent-text: #ffffff; --accent-weak: rgba(79,70,229,.10);
+    --warn: #b45309; --good: #15803d; --bad: #dc2626;
+    --tile: #ececea;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+    --shadow-lift: 0 10px 30px rgba(24,24,27,.16);
+    --ring: 0 0 0 3px var(--accent-weak);
+    --radius: 16px; --radius-md: 12px; --radius-sm: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0a0a0c; --bg-2: #141417; --panel: rgba(20,20,24,.72); --panel-solid: #141418;
+      --card: #18181c; --text: #f4f4f5; --muted: #a1a1aa; --faint: #6b6b74;
+      --line: #27272a; --line-strong: #3a3a40;
+      --accent: #818cf8; --accent-hover: #a5b4fc; --accent-text: #0a0a14; --accent-weak: rgba(129,140,248,.16);
+      --warn: #fbbf24; --good: #4ade80; --bad: #f87171;
+      --tile: #202024;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 22px rgba(0,0,0,.5);
+      --shadow-lift: 0 14px 38px rgba(0,0,0,.6);
+    }
+  }
+  * { box-sizing: border-box; }
+  ::selection { background: var(--accent-weak); }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body { margin: 0; background: var(--bg); color: var(--text); letter-spacing: -0.01em;
+         font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", system-ui, sans-serif; }
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  * { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 99px;
+          border: 3px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); background-clip: content-box; }
+
+  header { position: sticky; top: 0; z-index: 5; background: var(--panel);
+           -webkit-backdrop-filter: saturate(180%) blur(18px); backdrop-filter: saturate(180%) blur(18px);
+           border-bottom: 1px solid var(--line); padding: 12px 20px;
+           display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: -0.02em;
+           display: inline-flex; align-items: center; gap: 9px; }
+  header h1::before { content: ""; width: 16px; height: 16px; border-radius: 6px;
+           background: linear-gradient(145deg, var(--accent), var(--accent-hover));
+           box-shadow: 0 2px 8px var(--accent-weak), inset 0 1px 0 rgba(255,255,255,.35); }
+  header h1 small.for { font-size: 12px; font-weight: 450; color: var(--muted); letter-spacing: 0; }
+  select, input[type=text], input[type=search], input[type=email], input[type=password] { background: var(--bg-2); border: 1px solid var(--line);
+           border-radius: var(--radius-sm); padding: 7px 11px; max-width: 100%; transition: border-color .15s, box-shadow .15s; }
+  select:focus, input:focus { outline: 0; border-color: var(--accent); box-shadow: var(--ring); }
+  select:hover { border-color: var(--line-strong); }
+
+  .tabs { display: flex; background: var(--bg-2); border: 1px solid var(--line);
+           border-radius: 11px; padding: 3px; gap: 2px; }
+  .tabs button { border: 0; background: transparent; padding: 6px 13px; border-radius: 8px;
+           color: var(--muted); font-weight: 530; font-variant-numeric: tabular-nums; transition: color .15s, background .15s; }
+  .tabs button:hover { color: var(--text); }
+  .tabs button[aria-pressed=true] { background: var(--panel-solid); color: var(--text); box-shadow: var(--shadow); }
+
+  .btn { border: 1px solid var(--line); background: var(--panel-solid); border-radius: var(--radius-sm);
+           padding: 7px 13px; font-weight: 530; transition: background .15s, border-color .15s, box-shadow .15s, transform .08s; }
+  .btn:hover:not(:disabled) { border-color: var(--line-strong); box-shadow: var(--shadow); }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .btn.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .spacer { flex: 1; }
+  #status { color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 500; }
+  #notice { width: 100%; color: var(--warn); display: none; font-size: 13px;
+           background: color-mix(in srgb, var(--warn) 10%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 24%, transparent);
+           border-radius: var(--radius-sm); padding: 8px 12px; }
+  #selnote { width: 100%; display: none; color: var(--muted); font-size: 13px; }
+  #selnote .caution { color: var(--warn); font-weight: 560; }
+  #refs { width: 100%; display: none; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--muted); }
+  .ref { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line);
+         border-radius: 999px; padding: 3px 5px 3px 3px; color: var(--text); background: var(--panel-solid); box-shadow: var(--shadow); }
+  .ref img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+  .ref button { border: 0; background: transparent; color: var(--faint); padding: 0 6px; font-size: 15px; transition: color .15s; }
+  .ref button:hover { color: var(--text); }
+  .ref .go { font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px;
+         color: var(--text); font-weight: 560; background: var(--bg-2); }
+  .ref .go:hover { border-color: var(--accent); color: var(--accent); }
+
+  main { padding: 14px 20px 72px; }
+  .group { margin-top: 4px; }
+  h2.month { font-size: 12px; font-weight: 650; color: var(--faint); margin: 26px 0 10px;
+           text-transform: uppercase; letter-spacing: 0.07em; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(164px, 1fr)); gap: 10px; }
+  .tile { position: relative; aspect-ratio: 1; background: var(--tile); border-radius: var(--radius-md);
+          overflow: hidden; cursor: pointer; outline-offset: 3px; box-shadow: var(--shadow);
+          transition: transform .18s cubic-bezier(.2,.7,.3,1), box-shadow .18s; }
+  .tile:hover { transform: translateY(-3px); box-shadow: var(--shadow-lift); }
+  .tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .2s ease, filter .2s; }
+  .tile .check { position: absolute; left: 8px; top: 8px; width: 24px; height: 24px; border-radius: 50%;
+          border: 2px solid rgba(255,255,255,.9); background: rgba(0,0,0,.22);
+          -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); color: transparent;
+          display: grid; place-items: center; font-size: 13px; font-weight: 800; transition: background .15s, transform .15s; }
+  .tile:hover .check { transform: scale(1.06); }
+  .tile[aria-checked=true] { box-shadow: 0 0 0 3px var(--accent), var(--shadow-lift); }
+  .tile[aria-checked=true] img { transform: scale(.9); border-radius: 8px; }
+  .tile[aria-checked=true] .check { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .tile .score { position: absolute; left: 8px; bottom: 8px; background: rgba(0,0,0,.55); color: #fff;
+          -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+          border-radius: 999px; padding: 2px 8px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tile .on { position: absolute; left: 40px; top: 10px; background: rgba(0,0,0,.55); color: #fff;
+          -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+          border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tile .zoom { position: absolute; right: 8px; top: 8px; width: 28px; height: 28px; border-radius: 8px;
+          border: 0; background: rgba(0,0,0,.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+          color: #fff; opacity: 0; font-size: 14px; transform: translateY(-2px); transition: opacity .15s, transform .15s; }
+  .tile:hover .zoom, .tile:focus-within .zoom, .tile .zoom:focus { opacity: 1; transform: translateY(0); }
+  @media (hover: none) { .tile .zoom { opacity: 1; transform: none; } }
+  .tile .verdict { position: absolute; right: 8px; bottom: 8px; display: flex; gap: 5px; }
+  .tile .verdict button { width: 28px; height: 28px; border-radius: 50%; border: 0; padding: 0;
+          background: rgba(0,0,0,.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+          color: #fff; font-size: 13px; font-weight: 800; transition: transform .12s; }
+  .tile .verdict button:hover { transform: scale(1.12); }
+  .tile[data-label=yes] .verdict .yes { background: var(--good); color: #fff; }
+  .tile[data-label=no] .verdict .no { background: var(--bad); color: #fff; }
+  .tile[data-label=no] img { opacity: .32; filter: grayscale(1); }
+
+  #flagbar { width: 100%; display: none; align-items: center; gap: 10px 14px; flex-wrap: wrap; color: var(--muted);
+          background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 11px 14px; }
+  #flagbar label { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+  #flagbar input { width: 68px; }
+  #flagbar .hint { width: 100%; font-size: 13px; color: var(--faint); }
+  #flag-summary { font-weight: 560; color: var(--text); }
+
+  #lb-verdict { display: grid; gap: 7px; margin-top: 10px; }
+  #lb-verdict[hidden] { display: none; }
+  #empty { color: var(--muted); padding: 72px 0; text-align: center; font-size: 15px; }
+
+  #lb { position: fixed; inset: 0; z-index: 20; background: rgba(8,8,10,.86);
+        -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: #f4f4f5;
+        display: grid; grid-template-columns: minmax(0, 1fr) 320px; }
+  #lb[hidden] { display: none; }
+  #lb-stage { display: grid; place-items: center; padding: 20px 60px; min-height: 0; min-width: 0; }
+  #lb-wrap { position: relative; display: inline-block; line-height: 0; }
+  #lb-img { max-width: 100%; max-height: calc(100vh - 40px); border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  .face { position: absolute; border: 2px solid rgba(255,255,255,.85); border-radius: 8px; background: transparent;
+          box-shadow: 0 0 0 1px rgba(0,0,0,.6); padding: 0; transition: border-color .15s; }
+  .face:hover { border-color: #fde68a; }
+  .face[aria-pressed=true] { border-color: #818cf8; border-width: 3px; box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 0 18px rgba(129,140,248,.6); }
+  #lb-side { background: #141418; border-left: 1px solid #27272a; padding: 22px 20px; overflow: auto; }
+  #lb-side h3 { font-size: 11px; margin: 24px 0 8px; color: #71717a; font-weight: 650;
+          text-transform: uppercase; letter-spacing: 0.07em; }
+  #lb-side p { margin: 6px 0; color: #c4c4cc; }
+  #lb-date { font-size: 15px; font-weight: 600; color: #f4f4f5 !important; letter-spacing: -0.01em; }
+  #lb-side .btn, #lb-side input { background: #202024; border-color: #3a3a40; color: #f4f4f5; width: 100%; }
+  #lb-side .btn:hover:not(:disabled) { border-color: #52525b; box-shadow: none; }
+  #lb-side input { margin-bottom: 9px; padding: 9px 11px; }
+  #lb-side input:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,.2); }
+  #lb-side .primary { background: #818cf8; border-color: #818cf8; color: #0a0a14; font-weight: 650; }
+  #lb-side .primary:hover:not(:disabled) { background: #a5b4fc; border-color: #a5b4fc; }
+  /* After the generic side-panel button rule, or it would win and hide the pressed state. */
+  #lb-side #lb-yes[aria-pressed=true] { background: var(--good); border-color: var(--good); color: #fff; font-weight: 650; }
+  #lb-side #lb-no[aria-pressed=true] { background: var(--bad); border-color: var(--bad); color: #fff; font-weight: 650; }
+  #lb-answer { min-height: 1.5em; }
+  .nav { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 68px; border: 0;
+         border-radius: 12px; background: rgba(255,255,255,.08); color: #fff; font-size: 26px;
+         -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background .15s; }
+  .nav:hover { background: rgba(255,255,255,.18); }
+  #lb-prev { left: 12px; } #lb-next { right: 332px; }
+  #lb-close, #fv-close { position: absolute; right: 14px; top: 12px; border: 0; background: rgba(255,255,255,.06);
+              width: 36px; height: 36px; border-radius: 10px; color: #f4f4f5; font-size: 22px; line-height: 1; z-index: 2;
+              display: grid; place-items: center; transition: background .15s; }
+  #lb-close:hover, #fv-close:hover { background: rgba(255,255,255,.18); }
+  kbd { border: 1px solid #3a3a40; border-radius: 5px; padding: 1px 5px; font: 12px ui-monospace, monospace;
+        background: #202024; }
+  @media (max-width: 760px) {
+    #lb { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+    #lb-stage { padding: 48px 8px 8px; } #lb-img { max-height: 55vh; }
+    #lb-side { border-left: 0; border-top: 1px solid #27272a; max-height: 42vh; }
+    #lb-next { right: 12px; } .nav { top: 30%; }
+  }
+  #descbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  #desc-q { min-width: 248px; }
+  #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(8px); z-index: 30;
+           background: var(--panel-solid); color: var(--text); border: 1px solid var(--line);
+           padding: 11px 18px; border-radius: 12px; display: none; font-weight: 530;
+           box-shadow: var(--shadow-lift); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  #flagbar [hidden] { display: none; }
+  #flag-frames[hidden] { display: none; }
+  #flag-frames { color: var(--muted); font-size: 13px; }
+  #flag-frames button { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-weight: 560; cursor: pointer; }
+  #flag-frames button:hover { text-decoration: underline; }
+
+  #people[hidden], #grid[hidden] { display: none; }
+  .p-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 12px 0 20px; color: var(--muted); }
+  .p-head h2 { font-size: 22px; font-weight: 650; letter-spacing: -0.025em; color: var(--text); margin: 0; }
+  .p-head .btn { align-self: center; }
+  .caution { color: var(--warn); }
+  .p-note { color: var(--muted); }
+  .p-empty { max-width: 460px; margin: 14vh auto 0; text-align: center; }
+  .p-empty h2 { font-size: 26px; font-weight: 650; letter-spacing: -0.03em; margin: 0; }
+  .p-empty p { color: var(--muted); margin: 10px 0 24px; font-size: 15px; }
+  .btn.big { padding: 11px 24px; font-size: 15px; border-radius: 12px; }
+  .p-progress { max-width: 460px; margin: 18px auto 26px; text-align: center; color: var(--muted); }
+  .p-progress:first-child:last-child { margin-top: 18vh; }
+  .p-progress-title { font-size: 17px; font-weight: 620; letter-spacing: -0.02em; color: var(--text); margin-bottom: 4px; }
+  .bar { height: 6px; margin-top: 12px; background: var(--bg-2); border: 1px solid var(--line);
+         border-radius: 99px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
+  .p-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); gap: 10px 8px; }
+  .person { text-align: center; padding: 16px 8px 10px; border-radius: var(--radius); min-width: 0; transition: background .15s; }
+  .person:hover, .person:focus-within, .person[data-picked=true] { background: var(--bg-2); }
+  .p-open { border: 0; background: none; padding: 0; display: block; margin: 0 auto; border-radius: 50%; outline-offset: 4px; }
+  .avatar { width: 108px; height: 108px; border-radius: 50%; overflow: hidden; display: grid; place-items: center;
+            background: var(--tile); box-shadow: var(--shadow); font-size: 36px; font-weight: 600; color: var(--faint);
+            transition: transform .18s cubic-bezier(.2,.7,.3,1), box-shadow .18s; }
+  .p-open:hover .avatar { transform: translateY(-3px) scale(1.03); box-shadow: var(--shadow-lift); }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .person[data-picked=true] .avatar { box-shadow: 0 0 0 3px var(--accent), var(--shadow-lift); }
+  .p-name { margin-top: 11px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .p-name.unnamed { color: var(--muted); font-weight: 500; }
+  .p-name input { width: 100%; text-align: center; padding: 3px 6px; }
+  .p-count { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .p-tools { display: flex; justify-content: center; gap: 2px; margin-top: 7px; opacity: 0; transition: opacity .15s; }
+  .person:hover .p-tools, .person:focus-within .p-tools, .person[data-picked=true] .p-tools { opacity: 1; }
+  @media (hover: none) { .p-tools { opacity: 1; } }
+  .p-tools button { border: 0; background: transparent; color: var(--muted); font-size: 12px; font-weight: 530;
+            padding: 3px 8px; border-radius: 7px; transition: background .15s, color .15s; }
+  .p-tools button:hover { background: var(--line); color: var(--text); }
+  .p-tools button[aria-pressed=true] { background: var(--accent-weak); color: var(--accent); }
+  details.p-more { margin-top: 30px; border-top: 1px solid var(--line); padding-top: 16px; }
+  details.p-more summary { cursor: pointer; color: var(--muted); font-weight: 560; margin-bottom: 10px; }
+  #p-merge { position: sticky; bottom: 20px; margin: 24px auto 0; width: fit-content; max-width: 100%; display: flex;
+            gap: 10px; align-items: center; flex-wrap: wrap; background: var(--panel-solid); border: 1px solid var(--line);
+            border-radius: 14px; padding: 9px 10px 9px 16px; box-shadow: var(--shadow-lift); }
+  #p-merge[hidden] { display: none; }
+  #suggest { margin: 4px 0 16px; padding: 12px 14px; background: var(--bg-2); border: 1px solid var(--line);
+            border-radius: var(--radius-md); }
+  #suggest[hidden] { display: none; }
+  .s-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; color: var(--muted); }
+  .s-head strong { color: var(--text); font-weight: 600; }
+  .s-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .s-item { display: flex; align-items: center; gap: 9px; background: var(--panel-solid); border: 1px solid var(--line);
+            border-radius: 999px; padding: 5px 9px 5px 5px; box-shadow: var(--shadow); }
+  .s-item .avatar { width: 52px; height: 52px; font-size: 18px; box-shadow: none; position: relative; }
+  .s-item .avatar:hover { transform: scale(2.4); z-index: 4; box-shadow: var(--shadow-lift); }
+  .s-count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .s-item button { border: 0; border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 560;
+            background: var(--bg-2); color: var(--text); transition: background .15s, color .15s; }
+  .s-item button.yes:hover { background: var(--good); color: #fff; }
+  .s-item button.no:hover { background: var(--line-strong); }
+  .s-item button.look:hover { background: var(--accent-weak); color: var(--accent); }
+  .s-item[aria-current=true] { border-color: var(--accent); }
+  .s-open { margin-top: 12px; padding: 12px; background: var(--panel-solid); border: 1px solid var(--line);
+            border-radius: var(--radius-md); }
+  .s-open p { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+  .s-faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+  .s-face { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--bg-2);
+            border: 2px solid var(--good); padding: 0; cursor: zoom-in; }
+  .s-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .s-face.off { border-color: var(--line); }
+  .s-face.off img { opacity: .35; filter: grayscale(1); }
+  .s-face .tick { position: absolute; top: 5px; right: 5px; width: 26px; height: 26px; border-radius: 999px; border: 0;
+            padding: 0; font-size: 14px; font-weight: 700; background: var(--good); color: #fff; cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+  .s-face.off .tick { background: rgba(255,255,255,.92); color: #52525b; }
+  .s-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+  /* One photo of a suggested group, full size, with the face in question outlined. */
+  #fv { position: fixed; inset: 0; z-index: 21; background: rgba(8,8,10,.9); color: #f4f4f5;
+        -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+        display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+  #fv[hidden] { display: none; }
+  #fv:focus { outline: none; }
+  #fv-stage { display: grid; place-items: center; padding: 20px 60px 8px; min-height: 0; }
+  #fv-wrap { position: relative; display: inline-block; line-height: 0; }
+  #fv-img { max-width: 100%; max-height: calc(100vh - 120px); border-radius: 10px; }
+  #fv-box { position: absolute; border: 3px solid #fde68a; border-radius: 8px; pointer-events: none;
+            box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 0 18px rgba(253,230,138,.5); }
+  #fv-bar { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 10px 16px 18px; }
+  #fv-bar .btn { background: #202024; border-color: #3a3a40; color: #f4f4f5; }
+  #fv-bar .btn.on { background: var(--good); border-color: var(--good); color: #fff; font-weight: 650; }
+  #fv-bar .btn.off { background: var(--bad); border-color: var(--bad); color: #fff; font-weight: 650; }
+  #fv-count { color: #a1a1aa; font-size: 13px; font-variant-numeric: tabular-nums; }
+  #fv-prev { left: 12px; } #fv-next { right: 12px; }
+  @media (max-width: 640px) { #fv-stage { padding: 12px 8px 4px; } #fv-keys { display: none; } }
+  /* First run: sign in, choose frames, get the photos. Nothing else on screen. */
+  body[data-setup=true] header > :not(h1) { display: none !important; }
+  #setup[hidden] { display: none; }
+  .setup { max-width: 440px; margin: 10vh auto 0; }
+  .setup h2 { font-size: 26px; font-weight: 650; letter-spacing: -0.03em; margin: 0; line-height: 1.2; }
+  .setup p { color: var(--muted); margin: 10px 0 0; font-size: 15px; }
+  .setup p.fine { font-size: 13px; color: var(--faint); margin-top: 14px; }
+  .setup form { display: grid; gap: 10px; margin-top: 22px; }
+  /* 16px keeps phones from zooming the page when a field is tapped. */
+  .setup input[type=email], .setup input[type=password] { width: 100%; padding: 12px 13px; font-size: 16px; border-radius: 12px; }
+  .frame-row { display: flex; gap: 11px; align-items: center; border: 1px solid var(--line); border-radius: var(--radius-md);
+         padding: 12px 13px; margin-top: 8px; cursor: pointer; background: var(--panel-solid); }
+  .frame-row input { accent-color: var(--accent); width: 17px; height: 17px; }
+  .frame-row strong { font-weight: 600; }
+  .frame-row .count { margin-left: auto; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+  .setup .dlg-actions { justify-content: flex-start; }
+  .linkish { border: 0; background: none; padding: 0; color: var(--muted); text-decoration: underline; font-size: 13px; }
+  .btn.danger { background: var(--bad); border-color: var(--bad); color: #fff; font-weight: 600; }
+  .btn.danger:hover:not(:disabled) { filter: brightness(1.08); border-color: var(--bad); }
+  #remove[hidden] { display: none; }
+  #dlg { position: fixed; inset: 0; z-index: 25; background: rgba(8,8,10,.55); display: grid; place-items: center; padding: 16px;
+         -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  #dlg[hidden] { display: none; }
+  .dlg-card { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius);
+         box-shadow: var(--shadow-lift); width: min(520px, 100%); max-height: calc(100vh - 32px); overflow: auto; padding: 22px; }
+  .dlg-card h2 { margin: 0 0 4px; font-size: 19px; font-weight: 650; letter-spacing: -0.02em; }
+  .dlg-card p { margin: 10px 0 0; color: var(--muted); }
+  .dlg-card ul { margin: 10px 0 0; padding-left: 18px; color: var(--warn); }
+  .choice { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: var(--radius-md);
+         padding: 11px 12px; margin-top: 10px; cursor: pointer; }
+  .choice input { margin-top: 3px; accent-color: var(--accent); }
+  .choice[data-on=true] { border-color: var(--accent); background: var(--accent-weak); }
+  .choice strong { display: block; font-weight: 600; }
+  .choice span { color: var(--muted); font-size: 13px; }
+  .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+  /* Trust and safety: the sign-in notice, the face model step, plain errors. */
+  .trust { margin-top: 18px; padding: 12px 14px; background: var(--bg-2); border: 1px solid var(--line);
+         border-radius: var(--radius-md); font-size: 13px; color: var(--muted); }
+  .trust p { margin: 0; font-size: 13px; color: var(--text); }
+  .trust ul { margin: 6px 0 0; padding-left: 18px; }
+  .trust li { margin-top: 4px; }
+  .agree { display: flex; gap: 9px; align-items: center; font-weight: 560; cursor: pointer; }
+  .agree input { accent-color: var(--accent); width: 17px; height: 17px; }
+  .setup a { color: var(--accent); }
+  .problem p { margin: 10px 0 0; }
+  details.detail { margin-top: 6px; color: var(--faint); font-size: 12px; }
+  details.detail summary { cursor: pointer; }
+  details.detail code { display: block; white-space: pre-wrap; word-break: break-word; margin-top: 4px;
+         font: 12px ui-monospace, monospace; }
+  #loadstrip, #update { width: 100%; display: flex; align-items: center; gap: 6px 14px; flex-wrap: wrap;
+         font-size: 13px; color: var(--muted); }
+  #loadstrip[hidden], #update[hidden] { display: none; }
+  #loadstrip .bar { flex: 1 1 160px; margin: 0; height: 4px; max-width: 320px; }
+  #loadstrip-text { color: var(--text); font-weight: 560; font-variant-numeric: tabular-nums; }
+  #update { background: var(--accent-weak); border-radius: var(--radius-sm); padding: 7px 12px; color: var(--text); }
+  #update a { color: var(--accent); font-weight: 600; }
+  #removed[hidden] { display: none; }
+  .r-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(164px, 1fr)); gap: 14px 10px; }
+  .r-note { margin: 6px 2px 0; font-size: 12px; color: var(--muted); line-height: 1.35; }
+  .dlg-card .problem ul, .dlg-card ul.plain { color: var(--text); }
+  /* Using it from a phone: the dialog on the computer, the note on the phone. */
+  #remote-note { width: 100%; font-size: 13px; color: var(--muted); background: var(--bg-2);
+         border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px; }
+  #remote-note[hidden] { display: none; }
+  .phone-qr { display: grid; justify-items: center; gap: 8px; margin-top: 16px; }
+  .phone-qr svg { width: 220px; height: 220px; background: #fff; border-radius: 12px; padding: 6px; }
+  .phone-link { font: 13px/1.4 ui-monospace, monospace; word-break: break-all; text-align: center;
+         background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius-sm);
+         padding: 8px 10px; user-select: all; width: 100%; }
+  .phone-state { font-weight: 600; color: var(--good) !important; }
+  .dlg-card p.caution { color: var(--warn); }
+
+  /* Phone layout: everything fits 390px, nothing scrolls sideways, and
+     anything tapped is at least about 40px. */
+  @media (max-width: 600px) {
+    /* Not sticky, and no backdrop filter: that would also pin the fixed
+       Remove button to the header instead of the screen. */
+    header { position: static; padding: 10px 12px; gap: 8px; background: var(--bg);
+             -webkit-backdrop-filter: none; backdrop-filter: none; }
+    header h1 { flex: 1 1 auto; }
+    #frame { flex: 1 1 140px; min-width: 0; }
+    select, .btn, input[type=text], input[type=search] { min-height: 40px; }
+    .btn { padding: 8px 12px; }
+    .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+    .tabs button { min-height: 40px; padding: 4px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #descbar { width: 100%; flex-wrap: nowrap; }
+    #desc-q { min-width: 0; flex: 1 1 auto; font-size: 16px; }
+    #descbar .hint { display: none; }
+    #desc-select { flex: 0 1 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .spacer { display: none; }
+    #status { width: 100%; }
+    /* The red button stays in reach at the bottom of the screen. */
+    #remove { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 8;
+              min-height: 48px; font-size: 16px; box-shadow: var(--shadow-lift); }
+    main { padding: 10px 12px 96px; }
+    #flagbar { padding: 10px 12px; }
+    #flagbar label { flex-wrap: wrap; }
+    #flagbar .btn { white-space: normal; text-align: left; }
+    .grid, .r-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+    .r-grid { gap: 10px 4px; }
+    .tile { border-radius: 8px; }
+    .tile:hover { transform: none; }
+    .tile .check { left: 6px; top: 6px; width: 22px; height: 22px; }
+    .tile .zoom { right: 0; top: 0; width: 40px; height: 40px; border-radius: 0 0 0 10px; }
+    .tile .verdict { right: 0; bottom: 0; gap: 0; }
+    .tile .verdict button { width: 40px; height: 40px; border-radius: 10px 0 0 0; }
+    .tile .verdict button + button { border-radius: 0; }
+    .tile .on { left: 6px; top: 32px; font-size: 10px; padding: 0 6px; }
+    .tile .score { left: 4px; bottom: 4px; font-size: 11px; padding: 1px 6px; }
+    .tile:has(.verdict button + button) .score { display: none; }
+    .p-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .p-tools button { min-height: 40px; padding: 4px 10px; }
+    .p-empty { margin-top: 8vh; }
+    .s-item .avatar:hover { transform: none; }
+    .s-item button { min-height: 40px; }
+    .ref .go, .ref button { min-height: 36px; }
+    .setup { margin-top: 4vh; }
+    .setup h2 { font-size: 22px; }
+    .frame-row { min-height: 48px; }
+    .agree { min-height: 40px; }
+    .linkish { min-height: 40px; }
+    #dlg { padding: 0; place-items: end stretch; }
+    .dlg-card { width: 100%; max-height: 92vh; border-radius: var(--radius) var(--radius) 0 0;
+                padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+    .dlg-actions .btn { flex: 1 1 auto; min-height: 44px; }
+    .choice { min-height: 44px; }
+    #lb-side { padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); max-height: 46vh; }
+    #lb-side .btn { min-height: 44px; }
+    #lb-close { width: 44px; height: 44px; right: 8px; top: 8px; }
+    #lb-stage { padding: 56px 8px 8px; }
+    .nav { width: 44px; height: 56px; }
+    #lb-prev { left: 4px; } #lb-next { right: 4px; }
+    #lb-side h3:last-of-type, #lb-side h3:last-of-type + p, #lb-keys-verdict { display: none; }
+    #toast { left: 12px; right: 12px; transform: none; bottom: 76px; text-align: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>{{APP_NAME}} <small class="for">for Aura frames</small></h1>
+  <select id="frame" aria-label="Frame"></select>
+  <div class="tabs" role="group" aria-label="Which photos to show">
+    <button data-view="people" aria-pressed="true">People</button>
+    <button data-view="all" aria-pressed="false">All</button>
+    <button data-view="flagged" aria-pressed="false">Flagged</button>
+    <button data-view="description" aria-pressed="false">Found</button>
+    <button data-view="selected" aria-pressed="false">Selected</button>
+    <button data-view="removed" aria-pressed="false">Removed</button>
+  </div>
+  <div id="descbar">
+    <input id="desc-q" type="search" placeholder="Find: a desk, a birthday cake, a dog…" aria-label="Find photos by description">
+    <button class="btn" id="desc-go">Find</button>
+    <button class="btn" id="desc-select" hidden></button>
+    <span id="desc-summary" class="hint"></span>
+  </div>
+  <span class="spacer"></span>
+  <span id="status"></span>
+  <button class="btn" id="clear">Clear selection</button>
+  <button class="btn danger" id="remove" hidden></button>
+  <button class="btn" id="refresh">Refresh</button>
+  <button class="btn" id="frames-btn">Frames</button>
+  <button class="btn" id="phone-btn">Use on my phone</button>
+  <div id="remote-note" hidden>You are using the computer's page over your wifi. The connection is not encrypted: anyone on the same wifi could in principle watch what this phone sees, photos included, so use it only on your home network. You cannot sign in or out here, or get photos from Aura: a password must not cross the wifi unencrypted. Do those on the computer.</div>
+  <div id="refs"></div>
+  <div id="flagbar">
+    <span id="flag-summary"></span>
+    <label id="flag-show">Show
+      <select id="flag-filter">
+        <option value="all">All matches</option>
+        <option value="open">Unanswered</option>
+        <option value="yes">Confirmed</option>
+        <option value="no">Not them</option>
+      </select>
+    </label>
+    <label>Sort
+      <select id="flag-sort">
+        <option value="score-desc">Most similar first</option>
+        <option value="score-asc">Least similar first</option>
+        <option value="date-desc">Newest first</option>
+        <option value="date-asc">Oldest first</option>
+      </select>
+    </label>
+    <button class="btn" id="flag-rest"></button>
+    <button class="btn" id="flag-select"></button>
+    <label>Cut-off <input type="text" id="flag-threshold" inputmode="decimal" aria-label="Similarity cut-off"></label>
+    <button class="btn" id="flag-search">Search again</button>
+    <span id="flag-frames" hidden></span>
+    <span class="hint" id="flag-hint"></span>
+  </div>
+  <div id="update" hidden></div>
+  <div id="loadstrip" hidden role="status">
+    <span id="loadstrip-text"></span>
+    <div class="bar"><i id="loadstrip-bar"></i></div>
+    <span>You can look through people and photos now. Removing is turned on when loading has finished.</span>
+  </div>
+  <div id="notice"></div>
+  <div id="selnote"></div>
+</header>
+<main>
+  <div id="setup" hidden></div>
+  <div id="people" hidden></div>
+  <div id="removed" hidden></div>
+  <div id="suggest" hidden></div>
+  <div id="grid"></div>
+  <div id="empty" hidden></div>
+</main>
+
+<div id="lb" hidden role="dialog" aria-modal="true" aria-label="Photo">
+  <div id="lb-stage">
+    <div id="lb-wrap"><img id="lb-img" alt=""><div id="lb-faces"></div></div>
+  </div>
+  <button class="nav" id="lb-prev" aria-label="Previous photo">&#8249;</button>
+  <button class="nav" id="lb-next" aria-label="Next photo">&#8250;</button>
+  <button id="lb-close" aria-label="Close">&times;</button>
+  <aside id="lb-side">
+    <p id="lb-date"></p>
+    <p id="lb-score"></p>
+    <button class="btn" id="lb-select"></button>
+    <div id="lb-verdict" hidden>
+      <button class="btn" id="lb-yes" aria-pressed="false"></button>
+      <button class="btn" id="lb-no" aria-pressed="false"></button>
+      <p id="lb-answer" role="status"></p>
+    </div>
+    <h3>Pick the person</h3>
+    <p id="lb-face-status"></p>
+    <form id="lb-ref" hidden>
+      <input type="text" id="lb-name" placeholder="Their name" maxlength="60" autocomplete="off">
+      <button class="btn primary" type="submit">Save as reference</button>
+    </form>
+    <h3>Keys</h3>
+    <p><kbd>&larr;</kbd> <kbd>&rarr;</kbd> move &nbsp; <kbd>Space</kbd> select &nbsp; <kbd>Esc</kbd> close</p>
+    <p id="lb-keys-verdict" hidden><span id="lb-key-yes"><kbd>Y</kbd> it's them &nbsp; </span><kbd>N</kbd> not them</p>
+  </aside>
+</div>
+<div id="fv" hidden tabindex="-1" role="dialog" aria-modal="true" aria-label="Photo from a suggested group">
+  <div id="fv-stage"><div id="fv-wrap"><img id="fv-img" alt=""><div id="fv-box" hidden></div></div></div>
+  <button class="nav" id="fv-prev" aria-label="Previous photo">&#8249;</button>
+  <button class="nav" id="fv-next" aria-label="Next photo">&#8250;</button>
+  <button id="fv-close" aria-label="Close">&times;</button>
+  <div id="fv-bar">
+    <span id="fv-count"></span>
+    <button class="btn" id="fv-toggle" type="button"></button>
+    <span id="fv-keys"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> move &nbsp; <kbd>Space</kbd> change &nbsp; <kbd>Esc</kbd> close</span>
+  </div>
+</div>
+<div id="dlg" hidden role="dialog" aria-modal="true" aria-labelledby="dlg-title"><div class="dlg-card" id="dlg-card"></div></div>
+<div id="toast" role="status"></div>
+
+<!-- First run, step one: the face model is fetched only after this "yes". -->
+<template id="tpl-model">
+  <h2>First, the face model</h2>
+  <p>To find faces, this app uses InsightFace's face model (called “buffalo_l”). It is about 290 MB, is downloaded once from InsightFace to this computer, and runs only here. Your photos are never sent anywhere.</p>
+  <p>InsightFace's terms say its models are available for non-commercial research purposes only. Please read them before you agree. <a href="https://github.com/deepinsight/insightface#license" target="_blank" rel="noopener noreferrer">Read InsightFace's terms</a>.</p>
+  <div class="dlg-actions"><button class="btn primary big" type="button" id="model-go">I agree, download it</button></div>
+  <p class="fine">Nothing is downloaded until you press the button.</p>
+</template>
+
+<!-- Finding photos by description: its model is fetched only after this "yes". -->
+<template id="tpl-search-model">
+  <h2 id="dlg-title">First, the photo search model</h2>
+  <p>To find photos by what is in them, this app uses a text-and-image matching model (CLIP, made by OpenAI, in a version prepared by Qdrant). It is about 610 MB, is downloaded once from Hugging Face to this computer, and runs only on this computer. Your photos and what you type are never sent anywhere.</p>
+  <p>It is MIT-licensed, which allows any use.</p>
+  <p class="fine">Nothing is downloaded until you press the button. Finding people does not need it.</p>
+</template>
+
+<!-- Signing in: what this app is, before any password is typed. -->
+<template id="tpl-signin">
+  <h2>Find and remove someone from your Aura frames</h2>
+  <div class="trust">
+    <p><strong>Before you sign in</strong></p>
+    <ul>
+      <li>This is an independent third-party app, not affiliated with Aura. It signs in to your own Aura account and does on your behalf only what you approve here.</li>
+      <li>Aura's terms don't allow automation tools without its permission, so use it at your own discretion.</li>
+      <li>Your password goes only to Aura, to sign in. It is not saved.</li>
+      <li>Your photos stay on this computer. They are not uploaded anywhere.</li>
+    </ul>
+  </div>
+  <form id="signin-form">
+    <input type="email" name="email" placeholder="Aura email" aria-label="Aura email" autocomplete="username" required>
+    <input type="password" name="password" placeholder="Aura password" aria-label="Aura password" autocomplete="current-password" required>
+    <label class="agree"><input type="checkbox" id="signin-understand" required> I understand</label>
+    <button class="btn primary big" type="submit" id="signin-go" disabled>Sign in</button>
+  </form>
+  <div id="signin-problem" role="alert"></div>
+</template>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const state = { frameId: null, photos: [], byId: new Map(), selection: new Set(),
+                view: 'people', order: [], refs: [], last: null, open: null, face: null,
+                frames: [], people: null, merge: new Set(), openMore: new Set(),
+                suggest: { person: null, items: [] },
+                group: null,
+                flagged: { person: null, person_name: null, similarity_threshold: null, review_mode: 'opt_in' },
+                flagFilter: 'all', flagSort: 'score-desc' };
+try {
+  state.flagFilter = localStorage.getItem('flagFilter') || 'all';
+  state.flagSort = localStorage.getItem('flagSort') || 'score-desc';
+} catch (e) {}
+state.desc = { query: '', scores: null };  // last description search: id -> score
+const FLAG_FILTERS = {
+  all: () => true, open: (p) => !p.label, yes: (p) => p.label === 'yes', no: (p) => p.label === 'no',
+};
+const byDate = (a, b) => (a.taken_at || '').localeCompare(b.taken_at || '');
+const FLAG_SORTS = {
+  'score-desc': (a, b) => b.similarity - a.similarity,
+  'score-asc': (a, b) => a.similarity - b.similarity,
+  'date-desc': (a, b) => byDate(b, a),
+  'date-asc': byDate,
+};
+const reviewing = () => state.view === 'flagged' && !!state.flagged.person;
+const WAIT_FOR_LOAD = 'Removing is turned on when loading has finished.';
+state.loading = null;  // the photo load still running, if any
+state.removed = { frameId: null, items: [], pick: new Set() };
+// "All frames": every loaded frame at once. Each photo shows once, and
+// removing from here always means "from every frame it is on".
+const ALL = 'all';
+const inAll = () => state.frameId === ALL;
+let pickerKey = '';  // what the frame picker was last built for (see syncFramePicker)
+const where = () => inAll() ? 'on your frames' : `on ${frameName(state.frameId)}`;
+// How many of someone's photos are in the open view.
+const photosHere = (person) => inAll() ? person.photo_count : (person.frames[state.frameId] || 0);
+// Opt-out review (someone opened from the People view): every match counts as
+// them unless marked "not them", so there is nothing to confirm one by one.
+const optOut = () => state.flagged.review_mode === 'opt_out';
+
+async function api(path, options) {
+  const response = await fetch(path, options);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body.error || `Something went wrong (error ${response.status}). Try again.`);
+    error.detail = body.detail || '';
+    error.needs = body.needs || '';
+    throw error;
+  }
+  return body;
+}
+// A plain sentence, with the technical text folded away underneath.
+function problem(message, detail) {
+  const box = document.createElement('div'); box.className = 'problem';
+  if (message) {
+    const line = document.createElement('p'); line.className = 'caution'; line.textContent = message;
+    box.append(line);
+  }
+  if (detail) {
+    const more = document.createElement('details'); more.className = 'detail';
+    const summary = document.createElement('summary'); summary.textContent = 'Details';
+    const code = document.createElement('code'); code.textContent = detail;
+    more.append(summary, code); box.append(more);
+  }
+  return box;
+}
+const setTabs = (view) => document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === view));
+function toast(message) {
+  const el = $('toast'); el.textContent = message; el.style.display = 'block';
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => { el.style.display = 'none'; }, 2600);
+}
+const monthName = (key) => new Date(key + '-15T00:00:00').toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+const dateText = (iso) => iso ? new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date unknown';
+
+async function loadFrames() {
+  const sync = await api('/api/sync/status').catch(() => ({ state: 'idle' }));
+  if (sync.state === 'running') { state.loading = sync; showSyncProgress(sync); pollSync(); return; }
+  await showFrames();
+}
+
+// The loaded frames, their photos and the people, as they are now.
+async function showFrames() {
+  const [data, setup] = await Promise.all([api('/api/frames'), api('/api/setup').catch(() => null)]);
+  state.refs = data.references; renderRefs();
+  state.frames = data.frames;
+  fillFramePicker(data.frames);
+  pickerKey = '';
+  if (!data.frames.length) { if (!state.loading) await startSetup(); return; }
+  let saved = null;
+  try { saved = localStorage.getItem('frame'); } catch (e) {}
+  const select = $('frame');
+  const keep = [state.frameId, saved].find((id) => data.frames.some((f) => f.id === id));
+  select.value = keep || data.frames[0].id;
+  await loadPhotos(select.value);
+  await loadPeople();
+  // The face model went missing since (or was never fetched): ask again.
+  if (setup && !setup.face_model.present && !state.loading) await startSetup();
+}
+
+function fillFramePicker(frames) {
+  const select = $('frame'), current = state.frameId || select.value; select.innerHTML = '';
+  for (const frame of frames) {
+    const option = document.createElement('option');
+    option.value = frame.id; option.textContent = `${frame.name} (${frame.photos})`;
+    select.append(option);
+  }
+  if (frames.some((f) => f.id === current)) select.value = current;
+}
+
+// Photo counts in the frame picker, after something changed them.
+async function refreshFrameCounts() {
+  const data = await api('/api/frames');
+  state.frames = data.frames;
+  pickerKey = '';
+  syncFramePicker();
+}
+
+async function loadPhotos(frameId) {
+  const data = await api(`/api/frames/${frameId}/photos`);
+  state.frameId = frameId;
+  state.photos = data.photos;
+  state.byId = new Map(data.photos.map((p) => [p.id, p]));
+  state.selection = new Set(data.selection);
+  state.flagged = data.flagged;
+  state.desc = { query: '', scores: null };
+  renderDescbar();
+  try { localStorage.setItem('frame', frameId); } catch (e) {}
+  const notice = $('notice');
+  notice.style.display = data.sync_complete ? 'none' : 'block';
+  notice.textContent = data.sync_complete ? '' :
+    `Download still running: ${data.photos.length} photos so far, shown in download order. Press Refresh to load more.`;
+  render();
+  loadSuggestions();
+}
+
+function currentOrder() {
+  if (state.view === 'flagged') {
+    // The filter only applies while answering about a saved person.
+    const keep = reviewing() && !optOut() ? (FLAG_FILTERS[state.flagFilter] || FLAG_FILTERS.all) : FLAG_FILTERS.all;
+    return state.photos.filter((p) => p.similarity != null && keep(p))
+      .sort(FLAG_SORTS[state.flagSort] || FLAG_SORTS['score-desc']);
+  }
+  if (state.view === 'description') {
+    const scores = state.desc.scores;
+    if (!scores) return [];
+    return state.photos.filter((p) => scores.has(p.id))
+      .sort((a, b) => scores.get(b.id) - scores.get(a.id));
+  }
+  if (state.view === 'selected') return state.photos.filter((p) => state.selection.has(p.id));
+  return state.photos;
+}
+
+function makeTile(photo, index) {
+  const tile = document.createElement('div');
+  tile.className = 'tile'; tile.dataset.id = photo.id; tile.dataset.index = index;
+  tile.tabIndex = 0; tile.setAttribute('role', 'checkbox');
+  tile.setAttribute('aria-checked', state.selection.has(photo.id));
+  tile.setAttribute('aria-label', `Photo, ${dateText(photo.taken_at)}`);
+  const img = document.createElement('img');
+  img.loading = 'lazy'; img.decoding = 'async'; img.alt = '';
+  img.src = `/thumb/${state.frameId}/${photo.id}.jpg`;
+  const check = document.createElement('span'); check.className = 'check'; check.textContent = '✓';
+  const zoom = document.createElement('button');
+  zoom.className = 'zoom'; zoom.type = 'button'; zoom.textContent = '⤢';
+  zoom.setAttribute('aria-label', 'View larger');
+  tile.append(img, check, zoom);
+  if (photo.frames && photo.frames.length > 1) {
+    const on = document.createElement('span'); on.className = 'on';
+    on.textContent = `on ${photo.frames.length} frames`;
+    on.title = photo.frames.map(frameName).join(', ');
+    tile.append(on);
+  }
+  if (photo.similarity != null && state.view !== 'description') {
+    const score = document.createElement('span'); score.className = 'score';
+    score.textContent = photo.similarity.toFixed(2); score.title = 'Similarity to the reference face';
+    tile.append(score);
+  }
+  if (state.view === 'description' && state.desc.scores && state.desc.scores.has(photo.id)) {
+    const score = document.createElement('span'); score.className = 'score';
+    score.textContent = state.desc.scores.get(photo.id).toFixed(2);
+    score.title = 'Match to “' + state.desc.query + '”';
+    tile.append(score);
+  }
+  if (reviewing()) {
+    tile.dataset.label = photo.label || '';
+    const verdict = document.createElement('span'); verdict.className = 'verdict';
+    const marks = [['yes', '✓', "It's them"], ['no', '✗', 'Not them']];
+    for (const [label, mark, text] of optOut() ? marks.slice(1) : marks) {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = label; button.dataset.label = label;
+      button.textContent = mark; button.title = text; button.setAttribute('aria-label', text);
+      verdict.append(button);
+    }
+    tile.append(verdict);
+  }
+  return tile;
+}
+
+function render() {
+  syncFramePicker();
+  const showPeople = state.view === 'people', showRemoved = state.view === 'removed';
+  $('people').hidden = !showPeople; $('removed').hidden = !showRemoved;
+  $('grid').hidden = showPeople || showRemoved;
+  renderSuggest();
+  if (showRemoved) {
+    state.order = []; state.last = null; $('empty').hidden = true;
+    renderRemoved(); loadRemoved(); updateStatus();
+    return;
+  }
+  if (showPeople) {
+    state.order = []; state.last = null; $('empty').hidden = true;
+    renderPeople(); updateStatus();
+    return;
+  }
+  state.order = currentOrder();
+  state.last = null;
+  const grid = $('grid'); grid.innerHTML = '';
+  const empty = $('empty');
+  empty.hidden = state.order.length > 0;
+  if (!state.order.length) {
+    const anyFlagged = state.photos.some((p) => p.similarity != null);
+    const nothingHere = { open: 'Every match has been answered.', yes: 'No confirmed matches yet.',
+                          no: 'No matches marked as not them.' }[state.flagFilter];
+    empty.textContent = state.view === 'flagged'
+      ? (anyFlagged && nothingHere ? `${nothingHere} Change "Show" to see the others.`
+         : 'No flagged photos yet. They appear here after a search for a person has been run.')
+      : state.view === 'description'
+        ? (state.desc.query ? `Nothing matched “${state.desc.query}”. Try other words or lower the cut-off.`
+           : 'Type a description above and press Find to search these photos.')
+      : state.view === 'selected' ? 'Nothing selected yet. Click photos to select them.' : 'No photos.';
+  }
+  const grouped = (state.view === 'all') && state.order.some((p) => p.taken_at);
+  let section = null, key = null, holder = null;
+  state.order.forEach((photo, index) => {
+    const group = grouped ? (photo.taken_at || '').slice(0, 7) || 'unknown' : 'all';
+    if (group !== key) {
+      key = group;
+      section = document.createElement('section'); section.className = 'group';
+      if (grouped) {
+        const heading = document.createElement('h2'); heading.className = 'month';
+        heading.textContent = group === 'unknown' ? 'Date unknown' : monthName(group);
+        section.append(heading);
+      }
+      holder = document.createElement('div'); holder.className = 'grid';
+      section.append(holder); grid.append(section);
+    }
+    holder.append(makeTile(photo, index));
+  });
+  updateStatus();
+}
+
+function updateStatus() {
+  const flagged = state.photos.filter((p) => p.similarity != null).length;
+  $('status').textContent = `${state.selection.size} selected of ${state.photos.length}`;
+  document.querySelector('[data-view=people]').textContent =
+    state.people && state.people.built_at ? `People (${mainPeople().main.length})` : 'People';
+  document.querySelector('[data-view=flagged]').textContent = `Flagged (${flagged})`;
+  document.querySelector('[data-view=selected]').textContent = `Selected (${state.selection.size})`;
+  const found = state.desc.scores ? state.desc.scores.size : 0;
+  document.querySelector('[data-view=description]').textContent = state.desc.query ? `Found (${found})` : 'Found';
+  renderDescbar();
+  $('clear').disabled = state.selection.size === 0;
+  $('remove').hidden = state.selection.size === 0 || state.view === 'people' || state.view === 'removed';
+  $('remove').textContent = `Remove ${plural(state.selection.size, 'photo')}…`;
+  // One job at a time: nothing is removed, and no second load starts, while
+  // photos are still loading. The strip at the top says why.
+  $('remove').disabled = !!state.loading;
+  $('remove').title = state.loading ? WAIT_FOR_LOAD : '';
+  $('frames-btn').disabled = !!state.loading;
+  $('frames-btn').title = state.loading ? 'Wait for the photos to finish loading.' : '';
+  renderFlagbar();
+  renderSelectionNote();
+}
+
+// Say plainly what is in the removal selection, and flag anything unconfirmed.
+function renderSelectionNote() {
+  const note = $('selnote'), name = state.flagged.person_name;
+  const chosen = state.photos.filter((p) => state.selection.has(p.id));
+  note.style.display = chosen.length && name ? 'block' : 'none';
+  note.textContent = '';
+  if (!chosen.length || !name) return;
+  const count = (test) => chosen.filter(test).length;
+  const yes = count((p) => p.label === 'yes');
+  const no = count((p) => p.label === 'no');
+  const open = count((p) => p.similarity != null && !p.label);
+  const hand = count((p) => p.similarity == null);
+  const cautions = [];
+  if (optOut()) {
+    note.append(`Selected for removal: ${yes + open} ${yes + open === 1 ? 'photo' : 'photos'} of ${name}`);
+  } else {
+    note.append(`Selected for removal: ${yes} confirmed as ${name}`);
+    if (open) cautions.push(`${open} matched but not confirmed`);
+  }
+  if (no) cautions.push(`${no} marked not ${name}`);
+  if (hand) cautions.push(`${hand} picked by hand`);
+  if (cautions.length) {
+    const span = document.createElement('span'); span.className = 'caution';
+    span.textContent = `, plus ${cautions.join(', ')}`;
+    note.append(span);
+  }
+  note.append('. Nothing is removed until you press Remove and confirm.');
+}
+
+function renderFlagbar() {
+  const bar = $('flagbar');
+  bar.style.display = reviewing() ? 'flex' : 'none';
+  if (!reviewing()) return;
+  const name = state.flagged.person_name;
+  const flagged = state.photos.filter((p) => p.similarity != null);
+  const yes = flagged.filter((p) => p.label === 'yes').length;
+  const no = flagged.filter((p) => p.label === 'no').length;
+  const open = flagged.length - yes - no;
+  const out = optOut();
+  $('flag-show').hidden = out;
+  renderNextFrames();
+  if (out) {
+    const chosen = flagged.filter((p) => state.selection.has(p.id) && p.label !== 'no').length;
+    const person = everyone().find((p) => p.id === state.flagged.person);
+    const on = person ? Object.keys(person.frames).length : 0;
+    const place = inAll() && on > 1 ? `on ${on} frames` : where();
+    $('flag-summary').textContent = `${flagged.length} ${flagged.length === 1 ? 'photo' : 'photos'} of ${name} ${place} · ${chosen} selected for removal · ${no} marked not them`;
+    $('flag-summary').title = person && on > 1 ? frameBreakdown(person) : '';
+    $('flag-hint').textContent = `Everything here starts out selected for removal. Press ✗ on any photo that isn't ${name}.`;
+    $('flag-rest').hidden = true; $('flag-select').hidden = true;
+  } else {
+    $('flag-summary').textContent = `${flagged.length} ${flagged.length === 1 ? 'match' : 'matches'} for ${name}: ${yes} confirmed, ${no} not them, ${open} unanswered`;
+    $('flag-hint').textContent = '✓ and ✗ tell the search whether a photo shows them. The circle in the corner selects a photo for removal.';
+    $('flag-rest').hidden = open === 0;
+  }
+  $('flag-rest').textContent = open === 1 ? `The other one is ${name}` : `The other ${open} are ${name}`;
+  const confirmed = flagged.filter((p) => p.label === 'yes');
+  const waiting = confirmed.filter((p) => !state.selection.has(p.id)).length;
+  if (!out) $('flag-select').hidden = confirmed.length === 0;
+  $('flag-select').disabled = waiting === 0;
+  $('flag-select').textContent = waiting === 0
+    ? `All ${confirmed.length} confirmed are selected for removal`
+    : `Select ${waiting === confirmed.length ? `the ${waiting} confirmed` : `${waiting} more confirmed`} for removal`;
+  const counts = { all: flagged.length, open, yes, no };
+  const names = { all: 'All matches', open: 'Unanswered', yes: 'Confirmed', no: 'Not them' };
+  for (const option of $('flag-filter').options) {
+    option.textContent = `${names[option.value]} (${counts[option.value]})`;
+  }
+  $('flag-filter').value = state.flagFilter;
+  $('flag-sort').value = state.flagSort;
+  if (document.activeElement !== $('flag-threshold')) {
+    $('flag-threshold').value = state.flagged.similarity_threshold ?? 0.45;
+  }
+}
+
+async function setLabel(ids, label) {
+  if (!ids.length) return true;
+  try {
+    await api(`/api/frames/${state.frameId}/feedback`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ asset_ids: ids, label }),
+    });
+  } catch (error) { toast(error.message); return false; }
+  for (const id of ids) {
+    const photo = state.byId.get(id); if (photo) photo.label = label;
+    const tile = document.querySelector(`.tile[data-id="${id}"]`);
+    if (tile && reviewing()) tile.dataset.label = label || '';
+  }
+  renderFlagbar();
+  if (state.open != null) renderLightboxState();
+  return true;
+}
+async function toggleLabel(photo, label) {
+  const next = photo.label === label ? null : label;
+  if (!(await setLabel([photo.id], next))) return;
+  if (optOut()) {
+    // "Not them" takes the photo out of the removal; undoing it puts it back.
+    setSelected(photo.id, next !== 'no');
+    saveSelection();
+  }
+}
+
+async function runSearch(person) {
+  const buttons = [$('flag-search'), ...document.querySelectorAll('.ref .go')];
+  buttons.forEach((b) => { b.disabled = true; });
+  toast('Searching…');
+  try {
+    const body = person ? { person } : { similarity_threshold: Number($('flag-threshold').value) || undefined };
+    const result = await api(`/api/frames/${state.frameId}/search`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    state.view = 'flagged';
+    document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === 'flagged'));
+    await loadPhotos(state.frameId);
+    window.scrollTo(0, 0);
+    toast(`${result.match_count} ${result.match_count === 1 ? 'match' : 'matches'} in ${result.photos_scanned} photos`);
+  } catch (error) { toast(error.message); }
+  buttons.forEach((b) => { b.disabled = false; });
+}
+for (const [id, key] of [['flag-filter', 'flagFilter'], ['flag-sort', 'flagSort']]) {
+  $(id).addEventListener('change', (event) => {
+    state[key] = event.target.value;
+    try { localStorage.setItem(key, event.target.value); } catch (e) {}
+    render();
+  });
+}
+/* ---------- description (open-vocabulary) search ---------- */
+async function runDescriptionSearch() {
+  const q = $('desc-q').value.trim();
+  if (!q) { $('desc-q').focus(); return; }
+  const btn = $('desc-go'); btn.disabled = true; btn.textContent = 'Finding…';
+  try {
+    const result = await api(`/api/frames/${state.frameId}/search-text`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: q }),
+    });
+    state.desc = { query: result.query, scores: new Map(result.matches.map((m) => [m.asset_id, m.similarity])) };
+    state.view = 'description';
+    document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === 'description'));
+    render(); window.scrollTo(0, 0);
+    toast(`${result.match_count} photo${result.match_count === 1 ? '' : 's'} match “${result.query}”`);
+  } catch (e) {
+    if (e.needs === 'search_model') askForSearchModel();
+    else toast(e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Find';
+  }
+}
+
+// The photo search model is fetched only after the user says yes here,
+// the first time Find is pressed. Only on the computer.
+const searchModel = { timer: null };
+async function askForSearchModel(job) {
+  const card = $('dlg-card'); card.textContent = ''; card.dataset.busy = 'false';
+  if (REMOTE) {
+    card.append(el('h2', { id: 'dlg-title', textContent: 'Set it up on the computer first' }),
+      el('p', { textContent: 'Finding photos by description needs a model that is downloaded on the computer. Press Find there once, then try again here.' }),
+      el('div', { className: 'dlg-actions' }, el('button', { className: 'btn primary', textContent: 'Close', onclick: closeDialog })));
+    showDialog(); return;
+  }
+  if (!job) {
+    const setup = await api('/api/setup').catch(() => null);
+    job = setup ? setup.search_model.download : { state: 'idle' };
+  }
+  if (job.state === 'running') { showSearchModelProgress(job); pollSearchModel(); return; }
+  card.append($('tpl-search-model').content.cloneNode(true));
+  if (job.state === 'error') card.append(problem(job.message, job.detail));
+  const go = el('button', { className: 'btn primary', textContent: job.state === 'error' ? 'I agree, try the download again' : 'I agree, download it' });
+  go.addEventListener('click', async () => {
+    go.disabled = true;
+    let answer;
+    try { answer = await api('/api/setup/search-model', post({ agree: true })); }
+    catch (error) { go.disabled = false; toast(error.message); return; }
+    if (answer.state === 'done') { closeDialog(); runDescriptionSearch(); return; }
+    showSearchModelProgress({ done: 0, total: 0, message: 'Starting the download', started_at: Date.now() / 1000 });
+    pollSearchModel();
+  });
+  card.append(el('div', { className: 'dlg-actions' }, el('button', { className: 'btn', textContent: 'Not now', onclick: closeDialog }), go));
+  showDialog();
+}
+
+function showSearchModelProgress(status) {
+  const card = $('dlg-card'); card.textContent = ''; card.dataset.busy = 'true';
+  const bar = el('i');
+  bar.style.width = status.total ? `${Math.min(100, Math.round(100 * status.done / status.total))}%` : '0%';
+  card.append(el('h2', { id: 'dlg-title', textContent: 'Downloading the photo search model…' }),
+    el('p', { textContent: status.message || 'Starting' }), el('div', { className: 'bar' }, bar),
+    el('p', { className: 'fine', textContent: 'This happens once. Leave this page open.' }));
+  showDialog();
+}
+
+function pollSearchModel() {
+  clearTimeout(searchModel.timer);
+  searchModel.timer = setTimeout(async () => {
+    let status;
+    try { status = await api('/api/setup/search-model'); } catch (error) { pollSearchModel(); return; }
+    if (status.state === 'running') { showSearchModelProgress(status); pollSearchModel(); return; }
+    if (status.state === 'error') { askForSearchModel(status); return; }
+    closeDialog();
+    if ($('desc-q').value.trim()) runDescriptionSearch();
+  }, 1000);
+}
+function renderDescbar() {
+  const select = $('desc-select'), summary = $('desc-summary');
+  const n = state.desc.scores ? state.desc.scores.size : 0;
+  if (!state.desc.query) { select.hidden = true; summary.textContent = ''; return; }
+  summary.textContent = `${n} match${n === 1 ? '' : 'es'} for “${state.desc.query}”`;
+  select.hidden = n === 0;
+  select.textContent = `Select these ${n} for removal`;
+}
+$('desc-go').addEventListener('click', runDescriptionSearch);
+$('desc-q').addEventListener('keydown', (e) => { if (e.key === 'Enter') runDescriptionSearch(); });
+$('desc-select').addEventListener('click', () => {
+  if (!state.desc.scores) return;
+  const ids = [...state.desc.scores.keys()].filter((id) => state.byId.has(id));
+  const added = ids.filter((id) => !state.selection.has(id)).length;
+  for (const id of ids) setSelected(id, true);
+  saveSelection();
+  toast(added ? `Added ${added} to the selection` : 'Those are already selected');
+});
+$('flag-search').addEventListener('click', () => runSearch(null));
+$('flag-threshold').addEventListener('keydown', (event) => { if (event.key === 'Enter') runSearch(null); });
+$('flag-select').addEventListener('click', () => {
+  const ids = state.photos.filter((p) => p.similarity != null && p.label === 'yes').map((p) => p.id);
+  const added = ids.filter((id) => !state.selection.has(id)).length;
+  for (const id of ids) setSelected(id, true);
+  saveSelection();
+  toast(`${added} confirmed ${added === 1 ? 'photo' : 'photos'} selected for removal. Nothing is removed yet.`);
+});
+$('flag-rest').addEventListener('click', () => {
+  setLabel(state.photos.filter((p) => p.similarity != null && !p.label).map((p) => p.id), 'yes');
+});
+
+function setSelected(id, on) {
+  if (on) state.selection.add(id); else state.selection.delete(id);
+  const tile = document.querySelector(`.tile[data-id="${id}"]`);
+  if (tile) tile.setAttribute('aria-checked', on);
+}
+
+let saveTimer = null;
+function saveSelection() {
+  updateStatus();
+  if (state.open != null) renderLightboxState();
+  clearTimeout(saveTimer);
+  const frameId = state.frameId, ids = [...state.selection];
+  saveTimer = setTimeout(async () => {
+    try {
+      await api(`/api/frames/${frameId}/selection`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ asset_ids: ids }),
+      });
+    } catch (error) { toast(`Could not save the selection: ${error.message}`); }
+  }, 250);
+}
+
+function toggle(index, range) {
+  const photo = state.order[index]; if (!photo) return;
+  const on = !state.selection.has(photo.id);
+  if (range && state.last != null) {
+    const [from, to] = [Math.min(state.last, index), Math.max(state.last, index)];
+    for (let i = from; i <= to; i++) setSelected(state.order[i].id, on);
+  } else {
+    setSelected(photo.id, on);
+  }
+  state.last = index;
+  saveSelection();
+}
+
+$('grid').addEventListener('click', (event) => {
+  const tile = event.target.closest('.tile'); if (!tile) return;
+  const index = Number(tile.dataset.index);
+  const verdict = event.target.closest('.verdict button');
+  if (verdict) toggleLabel(state.order[index], verdict.dataset.label);
+  else if (event.target.closest('.zoom')) openLightbox(index);
+  else toggle(index, event.shiftKey);
+});
+$('grid').addEventListener('keydown', (event) => {
+  const tile = event.target.closest('.tile'); if (!tile || event.target.closest('button')) return;
+  if (event.key === ' ') { event.preventDefault(); toggle(Number(tile.dataset.index), event.shiftKey); }
+  if (event.key === 'Enter') { event.preventDefault(); openLightbox(Number(tile.dataset.index)); }
+});
+document.querySelector('.tabs').addEventListener('click', (event) => {
+  const button = event.target.closest('button'); if (!button) return;
+  state.view = button.dataset.view;
+  document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-pressed', b === button));
+  render(); window.scrollTo(0, 0);
+});
+$('frame').addEventListener('change', (event) => switchFrame(event.target.value));
+$('refresh').addEventListener('click', () => loadPhotos(state.frameId).then(loadPeople).catch((e) => toast(e.message)));
+$('clear').addEventListener('click', () => {
+  for (const id of [...state.selection]) setSelected(id, false);
+  saveSelection();
+  if (state.view === 'selected') render();
+});
+
+/* ---------- people (everyone found by grouping the faces) ---------- */
+function el(tag, props, ...children) {
+  const node = Object.assign(document.createElement(tag), props || {});
+  node.append(...children);
+  return node;
+}
+const JSON_POST = { method: 'POST', headers: { 'Content-Type': 'application/json' } };
+const everyone = () => state.people
+  ? [...state.people.people, ...state.people.seen_once, ...state.people.hidden] : [];
+const frameName = (id) => (state.frames.find((f) => f.id === id) || {}).name || id;
+// "Kitchen: 161 · Den: 20", and how many are on more than one.
+function frameBreakdown(person) {
+  const entries = Object.entries(person.frames).sort((a, b) => b[1] - a[1]);
+  const parts = entries.map(([id, n]) => `${frameName(id)}: ${n}`);
+  const shared = entries.reduce((sum, [, n]) => sum + n, 0) - person.photo_count;
+  return parts.join(' · ') + (shared > 0 ? ` (${plural(shared, 'photo')} on more than one frame, counted once in the ${person.photo_count})` : '');
+}
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+// The people shown up front: anyone named, and anyone in enough photos. The
+// smaller groups are mostly fragments of someone bigger and are tucked away.
+function mainPeople() {
+  const all = state.people ? state.people.people : [];
+  const bar = (state.people && state.people.main_min_photos) || 10;
+  const isMain = (p) => !!p.name || p.photo_count >= bar;
+  const main = all.filter(isMain);
+  // A small collection has nobody over the bar: then everyone is "main".
+  return main.length ? { main, smaller: all.filter((p) => !isMain(p)) } : { main: all, smaller: [] };
+}
+
+async function loadPeople() {
+  try { state.people = await api('/api/people'); } catch (error) { toast(error.message); return; }
+  const known = new Set(everyone().map((p) => p.id));
+  for (const id of [...state.merge]) if (!known.has(id)) state.merge.delete(id);
+  if (state.view === 'people') renderPeople();
+  updateStatus();
+  if (state.people.build.state === 'running') pollBuild();
+}
+
+function renderPeople() {
+  const box = $('people'); box.textContent = '';
+  if (!state.people) return;
+  const { build, built_at, seen_once, hidden } = state.people;
+  const { main: people, smaller } = mainPeople();
+  const running = build.state === 'running';
+  if (!built_at) {
+    if (running) box.append(progressBlock(build)); else box.append(emptyBlock(build));
+    return;
+  }
+  const head = el('div', { className: 'p-head' },
+    el('h2', { textContent: 'People' }),
+    el('span', { textContent: `${plural(people.length, 'person').replace('persons', 'people')} · updated ${dateText(built_at)}` }),
+    el('span', { className: 'spacer' }));
+  if (build.state === 'error') head.append(problem(build.message, build.detail));
+  if (state.people.can_undo) head.append(undoButton());
+  const again = el('button', { className: 'btn', type: 'button', textContent: 'Find people again',
+    disabled: running || !!state.loading, title: state.loading ? 'People are updated as the photos load.' : '' });
+  again.addEventListener('click', startBuild);
+  head.append(again);
+  box.append(head);
+  if (running) box.append(progressBlock(build));
+  if (!people.length) {
+    box.append(el('p', { className: 'p-note', textContent: 'Nobody appears in two or more photos yet.' }));
+  }
+  const grid = el('div', { className: 'p-grid' });
+  for (const person of people) grid.append(personTile(person));
+  box.append(grid);
+  for (const [key, title, list] of [['smaller', 'Smaller groups', smaller], ['seen', 'Seen once', seen_once], ['hidden', 'Hidden', hidden]]) {
+    if (!list.length) continue;
+    const more = el('details', { className: 'p-more', open: state.openMore.has(key) },
+      el('summary', { textContent: `${title} (${list.length})` }));
+    // Filled only when opened: each tile asks the server to cut out a face.
+    const fill = () => {
+      if (more.dataset.filled) return;
+      more.dataset.filled = '1';
+      const inner = el('div', { className: 'p-grid' });
+      for (const person of list) inner.append(personTile(person));
+      more.append(inner);
+    };
+    more.addEventListener('toggle', () => {
+      if (more.open) { state.openMore.add(key); fill(); } else state.openMore.delete(key);
+    });
+    if (more.open) fill();
+    box.append(more);
+  }
+  box.append(mergeBar());
+}
+
+function emptyBlock(build) {
+  const failed = build.state === 'error';
+  const go = el('button', { className: 'btn primary big', type: 'button', textContent: failed ? 'Try again' : 'Find people',
+    disabled: !!state.loading });
+  go.addEventListener('click', startBuild);
+  const wrap = el('div', { className: 'p-empty' },
+    el('h2', { textContent: 'Find the people in your photos' }),
+    el('p', { textContent: 'Scans every synced frame on this Mac and groups the faces. Nothing is uploaded.' }));
+  if (failed) wrap.append(problem(build.message, build.detail));
+  if (state.loading) wrap.append(el('p', { textContent: 'People appear here as the photos load.' }));
+  wrap.append(go);
+  return wrap;
+}
+
+function progressBlock(build) {
+  const fill = el('i');
+  fill.style.width = build.total ? `${Math.min(100, Math.round(100 * build.done / build.total))}%` : '0%';
+  return el('div', { className: 'p-progress' },
+    el('div', { className: 'p-progress-title', textContent: 'Looking for people…' }),
+    el('div', { className: 'p-progress-text', textContent: build.message || 'Working…' }),
+    el('div', { className: 'bar' }, fill));
+}
+
+async function startBuild() {
+  try { await api('/api/people/build', { method: 'POST' }); } catch (error) { toast(error.message); }
+  await loadPeople();  // sees the build running and starts polling
+}
+
+let buildTimer = null;
+function pollBuild() {
+  clearTimeout(buildTimer);
+  buildTimer = setTimeout(async () => {
+    let status;
+    try { status = await api('/api/people/status'); } catch (error) { pollBuild(); return; }
+    if (status.state !== 'running') {
+      await loadPeople();
+      if (status.state === 'done') toast(status.message);
+      return;
+    }
+    state.people.build = status;
+    const shown = document.querySelector('#people .p-progress');
+    if (shown) shown.replaceWith(progressBlock(status)); else if (state.view === 'people') renderPeople();
+    pollBuild();
+  }, 1000);
+}
+
+function personTile(person) {
+  const name = person.name || 'Unnamed';
+  const tile = el('div', { className: 'person' });
+  tile.dataset.id = person.id; tile.dataset.picked = state.merge.has(person.id);
+
+  const avatar = el('span', { className: 'avatar' });
+  const img = el('img', { alt: '', loading: 'lazy', src: `/people/${person.id}/avatar.jpg` });
+  img.addEventListener('error', () => {
+    avatar.textContent = (person.name || '?').trim().charAt(0).toUpperCase() || '?';
+  });
+  avatar.append(img);
+  const open = el('button', { className: 'p-open', type: 'button' }, avatar);
+  open.setAttribute('aria-label', `Find photos of ${person.name || 'this person'}`);
+  open.addEventListener('click', () => openPersonWhereTheyAre(person));
+
+  const label = el('div', { className: `p-name${person.name ? '' : ' unnamed'}`, textContent: name, title: name });
+  const count = el('div', { className: 'p-count' });
+  if (inAll() || state.frames.length < 2) {
+    count.append(plural(person.photo_count, 'photo'));
+  } else {
+    // The chosen frame first, then everything (a photo on several frames counts once).
+    const here = photosHere(person);
+    count.append(here ? `${here} on this frame` : 'None on this frame', el('br'), `${person.photo_count} on all frames`);
+  }
+  count.title = frameBreakdown(person);
+
+  const rename = el('button', { type: 'button', textContent: 'Rename' });
+  rename.addEventListener('click', () => editName(person, label));
+  const pick = el('button', { type: 'button', textContent: 'Merge', title: 'Pick two tiles that are the same person' });
+  pick.setAttribute('aria-pressed', state.merge.has(person.id));
+  pick.addEventListener('click', () => {
+    if (!state.merge.delete(person.id)) state.merge.add(person.id);
+    renderPeople();
+  });
+  const hide = el('button', { type: 'button', textContent: person.hidden ? 'Unhide' : 'Hide' });
+  hide.addEventListener('click', () => editPerson(person.id, { hidden: !person.hidden }));
+
+  tile.append(open, label, count, el('div', { className: 'p-tools' }, rename, pick, hide));
+  return tile;
+}
+
+function editName(person, holder) {
+  const input = el('input', { type: 'text', value: person.name || '', maxLength: 60, placeholder: 'Their name' });
+  input.setAttribute('aria-label', 'Name');
+  let done = false;
+  const finish = (save) => {
+    if (done) return;
+    done = true;
+    if (save && input.value.trim() !== (person.name || '')) editPerson(person.id, { name: input.value });
+    else renderPeople();
+  };
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') finish(true);
+    if (event.key === 'Escape') finish(false);
+  });
+  input.addEventListener('blur', () => finish(true));
+  holder.textContent = ''; holder.append(input);
+  input.focus(); input.select();
+}
+
+async function editPerson(id, change) {
+  try {
+    await api(`/api/people/${id}`, { method: 'PATCH', headers: JSON_POST.headers, body: JSON.stringify(change) });
+  } catch (error) { toast(error.message); }
+  await loadPeople();
+}
+
+function mergeBar() {
+  const picked = [...state.merge].map((id) => everyone().find((p) => p.id === id)).filter(Boolean)
+    .sort((a, b) => b.photo_count - a.photo_count);
+  const bar = el('div', { id: 'p-merge', hidden: picked.length === 0 });
+  if (picked.length === 2) {
+    const go = el('button', { className: 'btn primary', type: 'button', textContent: "Merge these two — they're the same person" });
+    // The one with more photos keeps its id, name and face.
+    go.addEventListener('click', () => mergePeople(picked[0].id, picked[1].id));
+    bar.append(go);
+  } else {
+    bar.append(el('span', { textContent: picked.length === 1
+      ? 'Pick one more tile that is the same person.' : 'Pick exactly two tiles to merge.' }));
+  }
+  const cancel = el('button', { className: 'btn', type: 'button', textContent: 'Cancel' });
+  cancel.addEventListener('click', () => { state.merge.clear(); renderPeople(); });
+  bar.append(cancel);
+  return bar;
+}
+
+async function mergePeople(target, other) {
+  try {
+    state.people = await api('/api/people/merge', { ...JSON_POST, body: JSON.stringify({ target, other }) });
+    state.merge.clear();
+    renderPeople(); updateStatus();
+    toast('Merged into one person');
+  } catch (error) { toast(error.message); }
+}
+
+// Find one person's photos on the open frame. Every match comes back already
+// selected for removal; the review is for un-flagging the ones that aren't them.
+async function openPerson(person) {
+  const who = person.name || 'this person';
+  if (!(photosHere(person) > 0)) { toast(`No photos of ${who} ${where()}.`); return; }
+  toast(`Finding ${who}…`);
+  try {
+    const result = await api(`/api/frames/${state.frameId}/search`, {
+      ...JSON_POST, body: JSON.stringify({ person: person.id, preselect: true }),
+    });
+    state.view = 'flagged';
+    document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === 'flagged'));
+    await loadPhotos(state.frameId);
+    window.scrollTo(0, 0);
+    toast(`${plural(result.match_count, 'photo')} of ${who} selected for removal. Press ✗ on any that aren't them.`);
+  } catch (error) { toast(error.message); }
+}
+
+// "More of them?": while reviewing someone from the People view, the other
+// groups of faces that look like the same person, each one click to add.
+async function loadSuggestions() {
+  const person = optOut() ? state.flagged.person : null;
+  let items = [];
+  if (person) {
+    try { items = (await api(`/api/people/${person}/suggestions`)).suggestions; } catch (error) { items = []; }
+  }
+  if (person !== (optOut() ? state.flagged.person : null)) return;  // the view moved on meanwhile
+  if (state.suggest.person !== person) { state.group = null; closeFaceViewer(); }
+  state.suggest = { person, items };
+  renderSuggest();
+}
+
+function undoButton() {
+  const undo = el('button', { className: 'btn', type: 'button', textContent: 'Undo last merge' });
+  undo.addEventListener('click', undoMerge);
+  return undo;
+}
+
+function renderSuggest() {
+  const box = $('suggest'); box.textContent = '';
+  const { person, items } = state.suggest;
+  const canUndo = !!(state.people && state.people.can_undo);
+  const show = state.view === 'flagged' && optOut() && person === state.flagged.person && (items.length > 0 || canUndo);
+  box.hidden = !show;
+  if (!show) return;
+  const name = state.flagged.person_name;
+  const head = el('div', { className: 's-head' });
+  if (items.length) {
+    head.append(el('strong', { textContent: `More of ${name}?` }),
+      el('span', { textContent: `${plural(items.length, 'group')} of faces ${items.length === 1 ? 'looks' : 'look'} similar. Hover a face to enlarge it.` }));
+  } else {
+    head.append(el('span', { textContent: 'No more similar groups.' }));
+  }
+  head.append(el('span', { className: 'spacer' }));
+  if (canUndo) head.append(undoButton());
+  box.append(head);
+  if (!items.length) return;
+  const list = el('div', { className: 's-list' });
+  for (const item of items) {
+    const avatar = el('span', { className: 'avatar' });
+    const img = el('img', { alt: '', loading: 'lazy', src: `/people/${item.id}/avatar.jpg` });
+    img.addEventListener('error', () => { avatar.textContent = '?'; });
+    avatar.append(img);
+    const look = el('button', { className: 'look', type: 'button', textContent: 'Look' });
+    look.setAttribute('aria-label', `Look at each of the ${plural(item.photo_count, 'photo')}`);
+    look.addEventListener('click', () => openGroup(item));
+    avatar.style.cursor = 'zoom-in';
+    avatar.addEventListener('click', () => openGroup(item));
+    const yes = el('button', { className: 'yes', type: 'button', textContent: 'Same person' });
+    yes.addEventListener('click', () => acceptSuggestion(item));
+    const no = el('button', { className: 'no', type: 'button', textContent: 'No' });
+    no.addEventListener('click', () => refuseSuggestion(item));
+    const row = el('div', { className: 's-item' }, avatar,
+      el('span', { className: 's-count', textContent: (item.name ? `${item.name} · ` : '') + plural(item.photo_count, 'photo') }),
+      look, yes, no);
+    if (state.group && state.group.id === item.id) row.setAttribute('aria-current', 'true');
+    list.append(row);
+  }
+  box.append(list);
+  if (state.group && items.some((item) => item.id === state.group.id)) box.append(groupPanel());
+}
+
+/* ---------- looking inside a suggested group ---------- */
+// A suggested group can be mostly the person with a few look-alikes in it.
+// Each face starts ticked; untick the ones that are not them, then add the rest.
+async function openGroup(item) {
+  if (state.group && state.group.id === item.id) { state.group = null; renderSuggest(); return; }
+  let faces;
+  try { faces = (await api(`/api/people/${item.id}/faces`)).faces; } catch (error) { toast(error.message); return; }
+  state.group = { id: item.id, item, faces, off: new Set(), open: null };
+  renderSuggest();
+}
+
+const faceKey = (face) => `${face.asset_id}/${face.index}`;
+
+function groupPanel() {
+  const group = state.group, name = state.flagged.person_name;
+  const panel = el('div', { className: 's-open' });
+  panel.append(el('p', { textContent:
+    `Is each of these ${name}? Untick any that aren't. Click a face to see the whole photo. The least alike are last.` }));
+  const grid = el('div', { className: 's-faces' });
+  group.faces.forEach((face, i) => {
+    const off = group.off.has(faceKey(face));
+    const tile = el('div', { className: 's-face' + (off ? ' off' : ''), role: 'button', tabIndex: 0 });
+    tile.setAttribute('aria-label', `Photo ${i + 1}: see it full size`);
+    const img = el('img', { alt: '', loading: 'lazy', src: `/face/${encodeURIComponent(face.asset_id)}/${face.index}.jpg` });
+    const tick = el('button', { className: 'tick', type: 'button', textContent: off ? '' : '✓' });
+    tick.setAttribute('aria-pressed', String(!off));
+    tick.setAttribute('aria-label', off ? `Photo ${i + 1}: not ${name}. Click to include it.` : `Photo ${i + 1}: ${name}. Click to leave it out.`);
+    tick.addEventListener('click', (event) => { event.stopPropagation(); flipFace(face); });
+    tile.addEventListener('click', () => openFaceViewer(i));
+    tile.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') { event.preventDefault(); openFaceViewer(i); }
+      else if (event.key === ' ') { event.preventDefault(); flipFace(face); }
+    });
+    tile.append(img, tick);
+    grid.append(tile);
+  });
+  panel.append(grid);
+  const kept = group.faces.length - group.off.size;
+  const actions = el('div', { className: 's-actions' });
+  const add = el('button', { className: 'btn primary', type: 'button',
+    textContent: kept === group.faces.length ? `Add all ${kept} to ${name}` : `Add ${kept} of ${group.faces.length} to ${name}` });
+  add.disabled = kept === 0;
+  add.addEventListener('click', addGroupFaces);
+  const none = el('button', { className: 'btn', type: 'button', textContent: `None of these are ${name}` });
+  none.addEventListener('click', () => { const item = group.item; state.group = null; refuseSuggestion(item); });
+  const close = el('button', { className: 'btn', type: 'button', textContent: 'Close' });
+  close.addEventListener('click', () => { state.group = null; renderSuggest(); });
+  actions.append(add, none, close);
+  panel.append(actions);
+  return panel;
+}
+
+function flipFace(face) {
+  const key = faceKey(face);
+  if (state.group.off.has(key)) state.group.off.delete(key); else state.group.off.add(key);
+  renderSuggest();
+  if (state.group.open != null) renderFaceViewer();
+}
+
+async function addGroupFaces() {
+  const group = state.group;
+  const kept = group.faces.filter((face) => !group.off.has(faceKey(face)));
+  if (!kept.length) return;
+  if (kept.length === group.faces.length) { state.group = null; await acceptSuggestion(group.item); return; }
+  try {
+    state.people = await api('/api/people/move-faces', { ...JSON_POST, body: JSON.stringify({
+      target: state.flagged.person, other: group.id, faces: kept.map((face) => [face.asset_id, face.index]) }) });
+  } catch (error) { toast(error.message); return; }
+  state.group = null;
+  updateStatus();
+  toast(`Added ${plural(kept.length, 'photo')}. The other ${plural(group.faces.length - kept.length, 'photo')} won't be suggested again.`);
+  await reopenReviewed();
+}
+
+let faceBoxRequest = 0;
+function openFaceViewer(index) {
+  const group = state.group;
+  if (!group || index < 0 || index >= group.faces.length) return;
+  group.open = index;
+  const face = group.faces[index];
+  if ($('fv').hidden) {
+    // Keys go to the viewer only: nothing behind it can be focused or changed.
+    behind().forEach((node) => { node.inert = true; });
+    $('fv').hidden = false;
+    $('fv').focus();
+  }
+  $('fv-box').hidden = true;
+  $('fv-img').src = `/photo/${encodeURIComponent(face.frame_id)}/${encodeURIComponent(face.asset_id)}.jpg`;
+  renderFaceViewer();
+  const request = ++faceBoxRequest;
+  api(`/api/face/${encodeURIComponent(face.asset_id)}/${face.index}`).then((data) => {
+    if (request !== faceBoxRequest) return;
+    const box = data.box;
+    Object.assign($('fv-box').style, { left: `${box.x * 100}%`, top: `${box.y * 100}%`,
+                                        width: `${box.w * 100}%`, height: `${box.h * 100}%` });
+    $('fv-box').hidden = false;
+  }).catch(() => {});
+}
+
+function renderFaceViewer() {
+  const group = state.group; if (!group || group.open == null) return;
+  const face = group.faces[group.open], name = state.flagged.person_name;
+  const off = group.off.has(faceKey(face));
+  $('fv-count').textContent = `${group.open + 1} of ${group.faces.length}`;
+  $('fv-toggle').textContent = off ? `✗ Not ${name} (click to include)` : `✓ ${name} (click to leave out)`;
+  $('fv-toggle').className = 'btn ' + (off ? 'off' : 'on');
+  $('fv-prev').disabled = group.open === 0;
+  $('fv-next').disabled = group.open === group.faces.length - 1;
+}
+
+function closeFaceViewer() {
+  if ($('fv').hidden) return;
+  $('fv').hidden = true;
+  behind().forEach((node) => { node.inert = false; });
+  const was = state.group ? state.group.open : null;
+  if (state.group) state.group.open = null;
+  const tiles = document.querySelectorAll('.s-face');
+  if (was != null && tiles[was]) tiles[was].focus();
+}
+$('fv-toggle').addEventListener('click', () => flipFace(state.group.faces[state.group.open]));
+$('fv-prev').addEventListener('click', () => openFaceViewer(state.group.open - 1));
+$('fv-next').addEventListener('click', () => openFaceViewer(state.group.open + 1));
+$('fv-close').addEventListener('click', closeFaceViewer);
+$('fv').addEventListener('click', (event) => { if (event.target.id === 'fv' || event.target.id === 'fv-stage') closeFaceViewer(); });
+document.addEventListener('keydown', (event) => {
+  if ($('fv').hidden || !state.group || state.group.open == null) return;
+  if (event.key === 'Escape') closeFaceViewer();
+  else if (event.key === 'ArrowLeft') openFaceViewer(state.group.open - 1);
+  else if (event.key === 'ArrowRight') openFaceViewer(state.group.open + 1);
+  else if (event.key === ' ' && event.target.tagName !== 'BUTTON') {  // a focused button handles its own Space
+    event.preventDefault(); flipFace(state.group.faces[state.group.open]);
+  }
+});
+
+// Re-run the search for the person under review, so the grid shows them as
+// they now are (after a merge or its undo).
+async function reopenReviewed() {
+  const person = everyone().find((p) => p.id === state.flagged.person);
+  if (person && photosHere(person) > 0) await openPerson(person);
+  else await loadPhotos(state.frameId);
+}
+
+async function acceptSuggestion(item) {
+  try {
+    state.people = await api('/api/people/merge', {
+      ...JSON_POST, body: JSON.stringify({ target: state.flagged.person, other: item.id }),
+    });
+  } catch (error) { toast(error.message); return; }
+  updateStatus();
+  await reopenReviewed();
+}
+
+async function refuseSuggestion(item) {
+  try {
+    await api('/api/people/not-same', { ...JSON_POST, body: JSON.stringify({ a: state.suggest.person, b: item.id }) });
+  } catch (error) { toast(error.message); return; }
+  state.suggest.items = state.suggest.items.filter((other) => other.id !== item.id);
+  renderSuggest();
+}
+
+async function undoMerge() {
+  try { state.people = await api('/api/people/unmerge', { method: 'POST' }); } catch (error) { toast(error.message); return; }
+  state.merge.clear();
+  updateStatus();
+  if (state.view === 'flagged' && optOut()) await reopenReviewed();
+  else if (state.view === 'people') renderPeople();
+  toast('Merge undone');
+}
+
+// In an opt-out review narrowed to one frame: say it is part of the whole,
+// with one way back to all of it. Which frame is chosen lives in the frame
+// picker, which lists this person's count on each frame (see syncFramePicker).
+function renderNextFrames() {
+  const box = $('flag-frames'); box.textContent = '';
+  const person = optOut() ? everyone().find((p) => p.id === state.flagged.person) : null;
+  const on = person ? Object.keys(person.frames).length : 0;
+  box.hidden = !person || inAll() || on < 2 || state.frames.length < 2;
+  if (box.hidden) return;
+  const here = person.frames[state.frameId] || 0;
+  box.title = frameBreakdown(person);
+  const all = el('button', { type: 'button', textContent: `Show all ${person.photo_count}` });
+  all.addEventListener('click', () => switchFrame(ALL));
+  box.append(`This frame has ${here} of their ${person.photo_count} photos, which are spread over ${on} frames. `, all);
+}
+
+// Opening someone from People.
+async function openPersonWhereTheyAre(person) {
+  // The tile leads with the chosen frame's count, so open that frame when
+  // they're on it; otherwise wherever they are.
+  const on = Object.keys(person.frames);
+  const target = inAll() || photosHere(person) > 0 ? state.frameId
+    : on.length > 1 && state.frames.some((f) => f.id === ALL) ? ALL
+    : on.length === 1 ? on[0] : state.frameId;
+  if (target !== state.frameId) {
+    $('frame').value = target;
+    try { await loadPhotos(target); } catch (error) { toast(error.message); return; }
+  }
+  await openPerson(person);
+}
+
+// Change frame. While reviewing someone, stay on them: open their review on
+// the new frame, or show that frame's photos if they're not on it.
+async function switchFrame(frameId) {
+  const person = state.view === 'flagged' && optOut() ? everyone().find((p) => p.id === state.flagged.person) : null;
+  $('frame').value = frameId;
+  try {
+    await loadPhotos(frameId);
+    if (!person) return;
+    const count = frameId === ALL ? person.photo_count : (person.frames[frameId] || 0);
+    if (count > 0) await openPerson(person);
+    else {
+      state.view = 'all'; setTabs('all'); render();
+      toast(`No photos of ${person.name || 'them'} on ${frameName(frameId)}. Showing all of its photos.`);
+    }
+  } catch (error) { toast(error.message); }
+}
+
+// The frame picker is the one place to choose a frame. While reviewing
+// someone it lists their count on each frame instead of the frame's size:
+// frames with them first (most first), then the frames without them.
+function syncFramePicker() {
+  const person = state.view === 'flagged' && optOut() ? everyone().find((p) => p.id === state.flagged.person) : null;
+  const key = person ? `${person.id}|${JSON.stringify(person.frames)}|${state.frameId}` : `|${state.frameId}|${JSON.stringify(state.frames)}`;
+  if (key === pickerKey) return;  // rebuilding an open <select> would close it
+  pickerKey = key;
+  if (!person) { fillFramePicker(state.frames); return; }
+  const select = $('frame'); select.innerHTML = '';
+  const name = person.name || 'them';
+  const option = (id, text) => { const o = document.createElement('option'); o.value = id; o.textContent = text; return o; };
+  const real = state.frames.filter((f) => f.id !== ALL);
+  if (state.frames.some((f) => f.id === ALL)) select.append(option(ALL, `All frames (${person.photo_count})`));
+  const withThem = real.filter((f) => person.frames[f.id]).sort((a, b) => person.frames[b.id] - person.frames[a.id]);
+  const without = real.filter((f) => !person.frames[f.id]);
+  const group = (label, frames, text) => {
+    if (!frames.length) return;
+    const g = document.createElement('optgroup'); g.label = label;
+    for (const f of frames) g.append(option(f.id, text(f)));
+    select.append(g);
+  };
+  group(`Frames with ${name}`, withThem, (f) => `${f.name} (${person.frames[f.id]})`);
+  group(`Not on these frames`, without, (f) => f.name);
+  select.value = state.frameId;
+}
+
+/* ---------- references ---------- */
+function renderRefs() {
+  const box = $('refs'); box.innerHTML = '';
+  box.style.display = state.refs.length ? 'flex' : 'none';
+  if (!state.refs.length) return;
+  box.append('Looking for:');
+  for (const ref of state.refs) {
+    const chip = document.createElement('span'); chip.className = 'ref';
+    const img = document.createElement('img'); img.src = `/reference/${ref.id}.jpg`; img.alt = '';
+    const name = document.createElement('span'); name.textContent = ref.name;
+    const go = document.createElement('button'); go.type = 'button'; go.className = 'go';
+    go.textContent = 'Search'; go.setAttribute('aria-label', `Search ${inAll() ? 'your frames' : 'this frame'} for ${ref.name}`);
+    go.addEventListener('click', () => runSearch(ref.person));
+    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '×';
+    remove.setAttribute('aria-label', `Remove ${ref.name}`);
+    remove.addEventListener('click', async () => {
+      try {
+        const data = await api(`/api/references/${ref.id}`, { method: 'DELETE' });
+        state.refs = data.references; renderRefs();
+      } catch (error) { toast(error.message); }
+    });
+    chip.append(img, name, go, remove); box.append(chip);
+  }
+}
+
+/* ---------- lightbox ---------- */
+let faceRequest = 0;
+function openLightbox(index) {
+  if (index < 0 || index >= state.order.length) return;
+  state.open = index; state.face = null;
+  const photo = state.order[index];
+  $('lb').hidden = false;
+  $('lb-faces').innerHTML = '';
+  $('lb-ref').hidden = true;
+  $('lb-img').src = `/photo/${state.frameId}/${photo.id}.jpg`;
+  $('lb-date').textContent = dateText(photo.taken_at);
+  $('lb-score').textContent = photo.similarity != null ? `Similarity to reference: ${photo.similarity.toFixed(2)}` : '';
+  $('lb-face-status').textContent = 'Looking for faces…';
+  renderLightboxState();
+  const request = ++faceRequest;
+  api(`/api/frames/${state.frameId}/photos/${photo.id}/faces`).then((data) => {
+    if (request !== faceRequest) return;
+    $('lb-face-status').textContent = data.faces.length
+      ? 'Click the face of the person you want to find.'
+      : 'No faces found in this photo.';
+    data.faces.forEach((box, i) => {
+      const button = document.createElement('button');
+      button.className = 'face'; button.type = 'button';
+      button.setAttribute('aria-label', `Face ${i + 1}`); button.setAttribute('aria-pressed', 'false');
+      Object.assign(button.style, { left: `${box.x * 100}%`, top: `${box.y * 100}%`,
+                                    width: `${box.w * 100}%`, height: `${box.h * 100}%` });
+      button.addEventListener('click', () => {
+        state.face = box;
+        document.querySelectorAll('.face').forEach((f) => f.setAttribute('aria-pressed', f === button));
+        $('lb-ref').hidden = false;
+        $('lb-face-status').textContent = 'Name them, then save.';
+        $('lb-name').focus();
+      });
+      $('lb-faces').append(button);
+    });
+  }).catch((error) => {
+    if (request === faceRequest) $('lb-face-status').textContent = error.message;
+  });
+}
+function renderLightboxState() {
+  const photo = state.order[state.open]; if (!photo) return;
+  const on = state.selection.has(photo.id);
+  $('lb-select').textContent = on ? '✓ Selected for removal (click to undo)' : 'Select this photo for removal';
+  $('lb-select').classList.toggle('primary', on);
+  const asking = !!state.flagged.person && photo.similarity != null;
+  $('lb-verdict').hidden = !asking; $('lb-keys-verdict').hidden = !asking;
+  if (asking) {
+    const name = state.flagged.person_name;
+    const out = optOut();
+    $('lb-yes').hidden = out; $('lb-key-yes').hidden = out;
+    $('lb-yes').textContent = `✓ Yes, this is ${name}`;
+    $('lb-no').textContent = out && photo.label === 'no' ? `✗ Not ${name} (click to undo)` : `✗ No, not ${name}`;
+    $('lb-yes').setAttribute('aria-pressed', photo.label === 'yes');
+    $('lb-no').setAttribute('aria-pressed', photo.label === 'no');
+    $('lb-answer').textContent = photo.label === 'yes' ? `Saved: this is ${name}.`
+      : photo.label === 'no' ? `Saved: not ${name}.` : out ? `Taken to be ${name}.` : 'Not answered yet.';
+  }
+}
+$('lb-yes').addEventListener('click', () => setLabel([state.order[state.open].id], 'yes'));
+$('lb-no').addEventListener('click', () => {
+  const photo = state.order[state.open];
+  if (optOut()) toggleLabel(photo, 'no'); else setLabel([photo.id], 'no');
+});
+function closeLightbox() {
+  const index = state.open;
+  state.open = null; faceRequest++; $('lb').hidden = true; $('lb-img').removeAttribute('src');
+  if (state.view === 'selected') render();
+  const tile = document.querySelector(`.tile[data-index="${index}"]`);
+  if (tile) { tile.focus({ preventScroll: true }); tile.scrollIntoView({ block: 'nearest' }); }
+}
+$('lb-close').addEventListener('click', closeLightbox);
+$('lb-prev').addEventListener('click', () => openLightbox(state.open - 1));
+$('lb-next').addEventListener('click', () => openLightbox(state.open + 1));
+$('lb-select').addEventListener('click', () => toggle(state.open, false));
+$('lb-stage').addEventListener('click', (event) => { if (event.target === $('lb-stage')) closeLightbox(); });
+$('lb-ref').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const photo = state.order[state.open]; if (!photo || !state.face) return;
+  $('lb-face-status').textContent = 'Saving…';
+  try {
+    const ref = await api('/api/references', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ frame_id: state.frameId, asset_id: photo.id, box: state.face, name: $('lb-name').value }),
+    });
+    state.refs.push(ref); renderRefs();
+    $('lb-ref').hidden = true;
+    $('lb-face-status').textContent = `Saved ${ref.name} as a reference.`;
+    toast(`Saved ${ref.name} as a reference`);
+  } catch (error) { $('lb-face-status').textContent = error.message; }
+});
+document.addEventListener('keydown', (event) => {
+  if (state.open == null) return;
+  const typing = event.target.tagName === 'INPUT';
+  if (event.key === 'Escape') closeLightbox();
+  else if (typing) return;
+  else if (event.key === 'ArrowLeft') openLightbox(state.open - 1);
+  else if (event.key === 'ArrowRight') openLightbox(state.open + 1);
+  else if (event.key === ' ') { event.preventDefault(); toggle(state.open, false); }
+  else if (!$('lb-verdict').hidden && (event.key === 'y' || event.key === 'n')) {
+    const photo = state.order[state.open], label = event.key === 'y' ? 'yes' : 'no';
+    if (optOut()) { if (label === 'no') toggleLabel(photo, 'no'); }
+    else if (photo.label !== label) setLabel([photo.id], label);
+  }
+});
+
+/* ---------- removing photos from Aura ---------- */
+// Nothing is sent to Aura until the user has read what will happen and pressed
+// the red button in this dialog. The photos named in the request are the ones
+// the preview listed.
+// The dialog always shows one preview, and confirming sends back that
+// preview's token: the server removes what that preview listed and nothing
+// else, whatever has been clicked or loaded since.
+const removal = { preview: null, timer: null };
+const post = (body) => ({ ...JSON_POST, body: JSON.stringify(body) });
+// While the dialog is up, nothing behind it can be clicked or tabbed to.
+const behind = () => [document.querySelector('header'), document.querySelector('main')];
+const showDialog = () => { behind().forEach((node) => { node.inert = true; }); $('dlg').hidden = false; };
+const closeDialog = () => {
+  behind().forEach((node) => { node.inert = false; });
+  delete $('dlg-card').dataset.phone;
+  removal.preview = null;
+  $('dlg').hidden = true; $('dlg-card').textContent = '';
+};
+const dialogBusy = () => !$('dlg').hidden && $('dlg-card').dataset.busy === 'true';
+
+async function openRemoval(scope, frameId, ids) {
+  if (state.loading) { toast(WAIT_FOR_LOAD); return; }
+  // Until the new preview is on screen there is nothing to confirm.
+  removal.preview = null;
+  $('dlg-card').querySelectorAll('button, input').forEach((node) => { node.disabled = true; });
+  let preview;
+  try {
+    preview = await api(`/api/frames/${frameId}/removal/preview`, post({ scope, asset_ids: ids }));
+  } catch (error) { closeDialog(); toast(error.message); return; }
+  removal.preview = preview;
+  renderRemoval();
+}
+
+function renderRemoval() {
+  const preview = removal.preview, card = $('dlg-card');
+  const n = preview.would_delete_count, everywhere = preview.scope === 'all_frames';
+  const here = frameName(preview.frame_id), fromAll = preview.frame_id === ALL;
+  const ids = [...preview.would_delete.map((p) => p.asset_id), ...preview.unknown_asset_ids, ...preview.no_copy_asset_ids];
+  card.textContent = ''; card.dataset.busy = 'false';
+  card.append(el('h2', { id: 'dlg-title', textContent: `Remove ${plural(n, 'photo')} from Aura?` }));
+  if (!n) {
+    card.append(el('p', { textContent: 'None of the selected photos can be removed yet. Wait for the download to finish, then try again.' }),
+      el('div', { className: 'dlg-actions' }, el('button', { className: 'btn', textContent: 'Close', onclick: closeDialog })));
+    showDialog();
+    return;
+  }
+  // The choice only exists when a photo could be on more than one frame here.
+  // From "All frames" there is no choice: it is always every frame.
+  if (state.frames.length > 1 && !fromAll) {
+    const choice = (scope, title, text) => {
+      const input = el('input', { type: 'radio', name: 'scope', checked: preview.scope === scope,
+        onchange: () => openRemoval(scope, preview.frame_id, ids) });
+      const label = el('label', { className: 'choice' }, input,
+        el('div', null, el('strong', { textContent: title }), el('span', { textContent: text })));
+      label.dataset.on = preview.scope === scope;
+      return label;
+    };
+    card.append(
+      choice('frame', `Only from ${here}`, 'Photos that are also on another frame stay there.'),
+      choice('all_frames', 'From every frame they are on', 'Each photo comes off all of your frames loaded here.'));
+  }
+  const frames = preview.frames_affected.map((f) => `${f.name} (${f.count})`).join(', ');
+  const gone = preview.last_copy_count, stay = n - gone;
+  let what = fromAll ? `This takes ${plural(n, 'photo')} off every frame ${n === 1 ? 'it is' : 'they are'} on: ${frames}.`
+    : everywhere ? `This takes ${plural(n, 'photo')} off: ${frames}.`
+    : `This takes ${plural(n, 'photo')} off ${here}.`;
+  if (gone) what += ` ${gone === n ? (n === 1 ? 'It' : 'They') : `${gone} of them`} will be on none of your loaded frames afterwards. Aura keeps a photo only while it is on a frame, so ${gone === 1 ? 'that one is' : 'those are'} gone from Aura for good.`;
+  if (stay) what += ` ${plural(stay, 'photo')} ${stay === 1 ? 'stays' : 'stay'} on another frame.`;
+  card.append(el('p', { textContent: what }));
+  const cautions = [...(preview.warnings || [])];
+  if (everywhere && preview.unsynced_frames.length) {
+    cautions.push(`Not checked, because ${preview.unsynced_frames.length === 1 ? 'it has' : 'they have'} not been loaded here: ${preview.unsynced_frames.map((f) => f.name).join(', ')}. Photos on ${preview.unsynced_frames.length === 1 ? 'that frame' : 'those frames'} stay.`);
+  }
+  const skipped = preview.unknown_asset_ids.length + preview.no_copy_asset_ids.length;
+  if (skipped) {
+    cautions.push(`${plural(skipped, 'selected photo')} cannot be removed yet, because ${skipped === 1 ? 'it has' : 'they have'} not finished downloading, and will be left alone.`);
+  }
+  if (cautions.length) card.append(el('ul', null, ...cautions.map((text) => el('li', { textContent: text }))));
+  card.append(el('p', { textContent: 'Aura has no trash, so this cannot be undone there. A copy of each photo is kept on this computer in the “removed” folder.' }));
+  card.append(el('div', { className: 'dlg-actions' },
+    el('button', { className: 'btn', textContent: 'Cancel', onclick: closeDialog }),
+    el('button', { className: 'btn danger', textContent: `Remove ${plural(n, 'photo')}`, onclick: startRemoval })));
+  showDialog();
+}
+
+async function startRemoval() {
+  const preview = removal.preview;
+  if (!preview) return;  // a newer preview is still loading
+  removal.preview = null;
+  try {
+    await api('/api/removal', post({ token: preview.token }));
+  } catch (error) { closeDialog(); toast(error.message); return; }
+  showRemovalProgress({ done: 0, total: preview.would_delete_count, message: 'Starting' });
+  pollRemoval();
+}
+
+function showRemovalProgress(status) {
+  const card = $('dlg-card');
+  card.textContent = ''; card.dataset.busy = 'true';
+  const bar = el('i'); bar.style.width = status.total ? `${Math.round(100 * status.done / status.total)}%` : '0%';
+  card.append(el('h2', { id: 'dlg-title', textContent: 'Removing photos…' }),
+    el('p', { textContent: status.message || 'Starting' }), el('div', { className: 'bar' }, bar),
+    el('p', { textContent: 'Keep this page open. Photos already removed stay removed if you close it.' }));
+  showDialog();
+}
+
+function pollRemoval() {
+  clearTimeout(removal.timer);
+  removal.timer = setTimeout(async () => {
+    let status;
+    try { status = await api('/api/removal/status'); } catch (error) { pollRemoval(); return; }
+    if (status.state === 'running') { showRemovalProgress(status); pollRemoval(); return; }
+    await loadPhotos(state.frameId).catch(() => {});
+    await loadPeople().catch(() => {});
+    await refreshFrameCounts().catch(() => {});
+    showRemovalResult(status);
+  }, 700);
+}
+
+function showRemovalResult(status) {
+  const card = $('dlg-card');
+  card.textContent = ''; card.dataset.busy = 'false';
+  const close = el('div', { className: 'dlg-actions' },
+    el('button', { className: 'btn primary', textContent: 'Done', onclick: closeDialog }));
+  const result = status.result;
+  if (status.state !== 'done' || !result) {
+    // An error, or the app was restarted while it ran and no longer knows.
+    card.append(el('h2', { id: 'dlg-title', textContent: 'The removal did not finish' }),
+      status.state === 'error' ? problem(status.message, status.detail)
+        : el('p', { textContent: 'The app stopped before it could report back. Some photos may already be removed. What is shown now is what is left.' }),
+      close);
+    showDialog();
+    return;
+  }
+  const n = result.deleted_count, partial = result.deleted.filter((d) => d.still_on.length);
+  const frames = new Set(result.deleted.flatMap((d) => d.frames));
+  card.append(el('h2', { id: 'dlg-title', textContent: n ? `Removed ${plural(n, 'photo')}`
+    : partial.length ? 'Only partly removed' : 'Nothing was removed' }));
+  if (n || partial.length) card.append(el('p', { textContent: frames.size > 1 ? `Taken off ${frames.size} frames. Copies are in the “removed” folder on this computer.` : 'Copies are in the “removed” folder on this computer.' }));
+  if (partial.length) {
+    const where = [...new Set(partial.flatMap((d) => d.still_on))].map(frameName).join(', ');
+    card.append(el('p', { className: 'caution', textContent: `${plural(partial.length, 'photo')} came off some frames but ${partial.length === 1 ? 'is' : 'are'} still on: ${where}.` }));
+  }
+  if (result.failed_count) {
+    const notTried = (f) => f.error.startsWith('not attempted: ');
+    const stopped = result.failed.find(notTried);
+    const reasons = [...new Set(result.failed.filter((f) => !notTried(f)).map((f) => f.reason || f.error))];
+    const raw = [...new Set(result.failed.map((f) => f.error))].join('\n');
+    card.append(problem(result.status === 'aborted' && stopped
+      ? `Stopped early, so ${plural(result.failed_count, 'removal')} did not happen. ${(stopped.reason || stopped.error).replace(/^not attempted: /i, '')}`
+      : `${plural(result.failed_count, 'removal')} did not work: ${reasons.slice(0, 3).join(' · ')}`, raw));
+  }
+  card.append(close);
+  showDialog();
+}
+
+$('remove').addEventListener('click', () => openRemoval(inAll() ? 'all_frames' : 'frame', state.frameId, [...state.selection]));
+$('dlg').addEventListener('click', (event) => { if (event.target === $('dlg') && !dialogBusy()) closeDialog(); });
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !$('dlg').hidden && !dialogBusy()) closeDialog();
+});
+// A removal still running when the page is opened again: show it.
+api('/api/removal/status').then((status) => {
+  if (status.state === 'running') { showRemovalProgress(status); pollRemoval(); }
+}).catch(() => {});
+
+/* ---------- removed: every photo taken off through this app, and putting it back ---------- */
+const removedFrames = (item) => item.frames.map((f) => f.name).join(', ');
+// What happened to a kept photo, in words.
+function removedNote(item) {
+  const when = item.when ? dateText(item.when) : 'on a date not known';
+  if (item.state === 'removing') return `This app was closed while removing this from ${removedFrames(item)} (${when}). It may still be on the frame.`;
+  if (item.state === 'missing') return `Not removed by this app: it was already gone from ${removedFrames(item)} when photos were loaded (${when}). A copy was kept here.`;
+  return `Removed ${item.when ? dateText(item.when) : 'on a date not known'} from ${removedFrames(item)}`;
+}
+async function loadRemoved() {
+  const frameId = state.frameId;
+  if (!frameId) return;
+  let data;
+  try { data = await api(`/api/frames/${frameId}/removed`); } catch (error) { toast(error.message); return; }
+  if (frameId !== state.frameId) return;
+  const ids = new Set(data.removed.map((item) => item.id));
+  if (state.removed.frameId !== frameId) state.removed.pick = new Set();
+  for (const id of [...state.removed.pick]) if (!ids.has(id)) state.removed.pick.delete(id);
+  state.removed.frameId = frameId; state.removed.items = data.removed;
+  if (state.view === 'removed') renderRemoved();
+}
+
+function renderRemoved() {
+  const box = $('removed'); box.textContent = '';
+  const items = state.removed.frameId === state.frameId ? state.removed.items : [];
+  const picked = items.filter((item) => state.removed.pick.has(item.id));
+  const back = el('button', { className: 'btn primary', type: 'button',
+    textContent: picked.length ? `Put back ${plural(picked.length, 'photo')}…` : 'Put back…',
+    disabled: !picked.length || !!state.loading,
+    title: state.loading ? 'You can put photos back once loading has finished.' : '' });
+  back.addEventListener('click', () => confirmRestore(picked));
+  box.append(el('div', { className: 'p-head' },
+    el('h2', { textContent: 'Removed' }),
+    el('span', { textContent: items.length ? `${plural(items.length, 'photo')} that left your frames, with a copy kept on this computer, newest first. Pick the ones to put back.` : '' }),
+    el('span', { className: 'spacer' }), back));
+  if (!items.length) {
+    box.append(el('p', { className: 'p-note', textContent: `Nothing has been removed ${where()} with this app yet. Photos you remove show up here, and can be put back.` }));
+    return;
+  }
+  const grid = el('div', { className: 'r-grid' });
+  for (const item of items) {
+    const on = state.removed.pick.has(item.id);
+    const tile = el('div', { className: 'tile', tabIndex: 0 });
+    tile.setAttribute('role', 'checkbox'); tile.setAttribute('aria-checked', on);
+    tile.setAttribute('aria-label', `Removed photo, ${dateText(item.taken_at)}`);
+    tile.append(el('img', { alt: '', loading: 'lazy', decoding: 'async', src: `/removed-thumb/${state.frameId}/${item.id}.jpg` }),
+      el('span', { className: 'check', textContent: '✓' }));
+    const flip = () => {
+      if (!state.removed.pick.delete(item.id)) state.removed.pick.add(item.id);
+      renderRemoved();
+    };
+    tile.addEventListener('click', flip);
+    tile.addEventListener('keydown', (event) => { if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); flip(); } });
+    grid.append(el('div', null, tile, el('p', { className: 'r-note', textContent: removedNote(item) })));
+  }
+  box.append(grid);
+}
+
+const restore = { timer: null };
+function confirmRestore(items) {
+  if (!items.length) return;
+  if (state.loading) { toast('You can put photos back once loading has finished.'); return; }
+  const counts = new Map();
+  for (const item of items) for (const f of item.frames) counts.set(f.name, (counts.get(f.name) || 0) + 1);
+  const card = $('dlg-card'); card.textContent = ''; card.dataset.busy = 'false';
+  card.append(el('h2', { id: 'dlg-title', textContent: `Put back ${plural(items.length, 'photo')}?` }),
+    el('p', { textContent: `Each photo goes back on the frames it was removed from: ${[...counts].map(([name, n]) => `${name} (${n})`).join(', ')}.` }),
+    el('p', { textContent: 'This works while Aura still has the photo. A photo that was taken off its last frame is gone from Aura; if so, you will be told where its copy is on this computer, so you can add it again with the Aura app.' }),
+    el('div', { className: 'dlg-actions' },
+      el('button', { className: 'btn', textContent: 'Cancel', onclick: closeDialog }),
+      el('button', { className: 'btn primary', textContent: `Put back ${plural(items.length, 'photo')}`, onclick: () => startRestore(items) })));
+  showDialog();
+}
+
+async function startRestore(items) {
+  try {
+    await api('/api/restore', post({ frame_id: state.frameId, asset_ids: items.map((item) => item.id) }));
+  } catch (error) {
+    const card = $('dlg-card'); card.textContent = '';
+    card.append(el('h2', { id: 'dlg-title', textContent: 'Could not start' }), problem(error.message, error.detail),
+      el('div', { className: 'dlg-actions' }, el('button', { className: 'btn primary', textContent: 'Close', onclick: closeDialog })));
+    return;
+  }
+  showRestoreProgress({ done: 0, total: items.length, message: 'Starting' });
+  pollRestore();
+}
+
+function showRestoreProgress(status) {
+  const card = $('dlg-card'); card.textContent = ''; card.dataset.busy = 'true';
+  const bar = el('i'); bar.style.width = status.total ? `${Math.round(100 * status.done / status.total)}%` : '0%';
+  card.append(el('h2', { id: 'dlg-title', textContent: 'Putting photos back…' }),
+    el('p', { textContent: status.message || 'Starting' }), el('div', { className: 'bar' }, bar));
+  showDialog();
+}
+
+function pollRestore() {
+  clearTimeout(restore.timer);
+  restore.timer = setTimeout(async () => {
+    let status;
+    try { status = await api('/api/restore/status'); } catch (error) { pollRestore(); return; }
+    if (status.state === 'running') { showRestoreProgress(status); pollRestore(); return; }
+    state.removed.pick = new Set();
+    await refreshFrameCounts().catch(() => {});
+    await loadPhotos(state.frameId).catch(() => {});
+    await loadPeople().catch(() => {});
+    await loadRemoved();
+    showRestoreResult(status);
+  }, 700);
+}
+
+function showRestoreResult(status) {
+  const card = $('dlg-card'); card.textContent = ''; card.dataset.busy = 'false';
+  const close = el('div', { className: 'dlg-actions' }, el('button', { className: 'btn primary', textContent: 'Done', onclick: closeDialog }));
+  const result = status.result;
+  if (status.state !== 'done' || !result) {
+    card.append(el('h2', { id: 'dlg-title', textContent: 'Putting back did not finish' }),
+      status.state === 'error' ? problem(status.message, status.detail)
+        : el('p', { textContent: 'The app stopped before it could report back. What is shown now is what is on your frames.' }), close);
+    showDialog(); return;
+  }
+  const back = new Set(result.restored.map((r) => r.asset_id)).size;
+  const frames = new Set(result.restored.map((r) => r.frame_id)).size;
+  card.append(el('h2', { id: 'dlg-title', textContent: back ? `Put back ${plural(back, 'photo')}` : 'Nothing was put back' }));
+  if (back) card.append(el('p', { textContent: `${back === 1 ? 'It is' : 'They are'} on ${frames === 1 ? 'the frame' : `${frames} frames`} again.` }));
+  if (result.failed.length) {
+    const messages = [...new Set(result.failed.map((f) => f.message))];
+    const raw = [...new Set(result.failed.map((f) => f.detail).filter(Boolean))].join('\n');
+    card.append(el('p', { className: 'caution', textContent: `${plural(new Set(result.failed.map((f) => f.asset_id)).size, 'photo')} could not be put back:` }),
+      el('ul', { className: 'plain' }, ...messages.map((text) => el('li', { textContent: text }))));
+    if (raw) card.append(problem('', raw));
+  }
+  card.append(close);
+  showDialog();
+}
+
+// A newer release, if GitHub can be reached. Quiet when it cannot.
+async function checkForUpdate(again) {
+  const info = await api('/api/version').catch(() => null);
+  if (info && info.newer) {
+    const box = $('update'); box.textContent = '';
+    box.append(`A newer version (${info.latest}) is available. You have ${info.version}.`,
+      el('a', { href: 'https://github.com/walensis-labs/frame-tidy/releases', target: '_blank', rel: 'noopener noreferrer', textContent: 'Get it' }),
+      el('button', { className: 'linkish', type: 'button', textContent: 'Not now', onclick: () => { box.hidden = true; } }));
+    box.hidden = false;
+  } else if (info && !again) {
+    setTimeout(() => checkForUpdate(true), 8000);  // the first look runs in the background
+  }
+}
+
+/* ---------- first run: sign in, choose frames, get the photos ---------- */
+let syncTimer = null;
+function showSetup(...nodes) {
+  document.body.dataset.setup = 'true';
+  for (const id of ['people', 'grid', 'empty', 'suggest']) $(id).hidden = true;
+  const box = $('setup'); box.textContent = ''; box.hidden = false;
+  box.append(el('div', { className: 'setup' }, ...nodes));
+}
+function hideSetup() {
+  delete document.body.dataset.setup;
+  $('setup').hidden = true; $('setup').textContent = '';
+}
+
+async function startSetup() {
+  if (REMOTE) {
+    // Signing in and loading happen on the computer only (see the note at the top).
+    showSetup(el('h2', { textContent: 'Set it up on the computer first' }),
+      el('p', { textContent: 'The face model, signing in to Aura and getting your photos are done on the computer, because a password must not cross the wifi unencrypted. When the photos are loaded there, reload this page.' }));
+    return;
+  }
+  let setup, account;
+  try { setup = await api('/api/setup'); }
+  catch (error) { showSetup(el('h2', { textContent: 'Something went wrong' }), problem(error.message, error.detail)); return; }
+  if (!setup.face_model.present) { showModelStep(setup.face_model); return; }
+  try { account = await api('/api/account'); }
+  catch (error) { showSetup(el('h2', { textContent: 'Something went wrong' }), problem(error.message, error.detail)); return; }
+  if (account.signed_in) await showFramePicker(); else showSignIn();
+}
+
+// The face model is fetched from InsightFace only after the user says yes here.
+let modelTimer = null;
+function showModelStep(model) {
+  const job = model.download || { state: 'idle' };
+  if (job.state === 'running') { showModelProgress(job); pollModel(); return; }
+  const step = $('tpl-model').content.cloneNode(true);
+  const go = step.querySelector('#model-go');
+  const nodes = [step];
+  if (job.state === 'error') { nodes.push(problem(job.message, job.detail)); go.textContent = 'I agree, try the download again'; }
+  go.addEventListener('click', async () => {
+    go.disabled = true;
+    let answer;
+    try { answer = await api('/api/setup/face-model', post({ agree: true })); }
+    catch (error) { go.disabled = false; toast(error.message); return; }
+    if (answer.state === 'done') { await startSetup(); return; }
+    showModelProgress({ done: 0, total: model.size_bytes, message: 'Starting the download', started_at: Date.now() / 1000 });
+    pollModel();
+  });
+  if (state.frames.length) nodes.push(cancelSetup());
+  showSetup(...nodes);
+}
+
+function showModelProgress(status) {
+  const bar = el('i');
+  bar.style.width = status.total ? `${Math.min(100, Math.round(100 * status.done / status.total))}%` : '0%';
+  const seconds = Math.max(0, Math.round(Date.now() / 1000 - (status.started_at || Date.now() / 1000)));
+  const spent = seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`;
+  showSetup(
+    el('h2', { textContent: 'Downloading the face model…' }),
+    el('p', { textContent: status.message || 'Starting' }),
+    el('div', { className: 'bar' }, bar),
+    el('p', { className: 'fine', textContent: `${spent} so far. This happens once. Leave this page open.` }));
+}
+
+function pollModel() {
+  clearTimeout(modelTimer);
+  modelTimer = setTimeout(async () => {
+    let status;
+    try { status = await api('/api/setup/face-model'); } catch (error) { pollModel(); return; }
+    if (status.state === 'running') { showModelProgress(status); pollModel(); return; }
+    if (status.state === 'error') {
+      const setup = await api('/api/setup').catch(() => null);
+      showModelStep({ ...(setup ? setup.face_model : {}), download: status });
+      return;
+    }
+    await startSetup();  // on to signing in
+  }, 1000);
+}
+
+function showSignIn(message, detail) {
+  const step = $('tpl-signin').content.cloneNode(true);
+  const form = step.querySelector('#signin-form'), go = step.querySelector('#signin-go');
+  const understand = step.querySelector('#signin-understand'), trouble = step.querySelector('#signin-problem');
+  const email = form.elements.email, password = form.elements.password;
+  if (message) trouble.append(problem(message, detail));
+  // Sign in stays off until the notice above it has been read and ticked.
+  understand.addEventListener('change', () => { go.disabled = !understand.checked; });
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!understand.checked) return;
+    go.disabled = true; go.textContent = 'Signing in…'; trouble.textContent = '';
+    try {
+      await api('/api/account/sign-in', post({ email: email.value, password: password.value }));
+    } catch (error) {
+      trouble.append(problem(error.message, error.detail)); go.disabled = false; go.textContent = 'Sign in';
+      return;
+    }
+    await showFramePicker();
+  });
+  const nodes = [step];
+  if (state.frames.length) nodes.push(cancelSetup());
+  showSetup(...nodes);
+  email.focus();
+}
+
+function cancelSetup() {
+  return el('button', { className: 'btn', type: 'button', textContent: 'Cancel', onclick: () => { hideSetup(); render(); } });
+}
+
+async function showFramePicker() {
+  showSetup(el('h2', { textContent: 'Finding your frames…' }));
+  let frames;
+  try { frames = (await api('/api/account/frames')).frames; }
+  catch (error) { showSignIn(error.message, error.detail); return; }
+  if (!frames.length) {
+    showSetup(el('h2', { textContent: 'No frames on this account' }),
+      el('p', { textContent: 'Aura did not list any frames for this sign-in.' }),
+      el('div', { className: 'dlg-actions' }, signOutButton()));
+    return;
+  }
+  const boxes = [];
+  const rows = frames.map((frame) => {
+    // Frames not loaded yet start ticked; on a first run that is all of them.
+    const box = el('input', { type: 'checkbox', value: frame.id, checked: !frame.synced || !state.frames.length });
+    boxes.push(box);
+    const count = frame.asset_count == null ? '' : plural(frame.asset_count, 'photo');
+    return el('label', { className: 'frame-row' }, box, el('strong', { textContent: frame.name }),
+      el('span', { className: 'count', textContent: frame.synced ? `${count} · ${frame.loaded} loaded here` : count }));
+  });
+  const go = el('button', { className: 'btn primary big', type: 'button', textContent: 'Get my photos' });
+  go.addEventListener('click', async () => {
+    const ids = boxes.filter((b) => b.checked).map((b) => b.value);
+    if (!ids.length) { toast('Choose at least one frame'); return; }
+    go.disabled = true;
+    try { await api('/api/sync', post({ frame_ids: ids })); }
+    catch (error) { toast(error.message); go.disabled = false; return; }
+    state.loading = { done: 0, total: 0, message: 'Starting' };
+    showSyncProgress(state.loading);
+    pollSync();
+  });
+  const actions = el('div', { className: 'dlg-actions' }, go);
+  if (state.frames.length) actions.append(cancelSetup());
+  showSetup(
+    el('h2', { textContent: 'Which frames should I look through?' }),
+    el('p', { textContent: 'Their photos are copied to this computer so the faces can be found here. Nothing on your frames changes. A big frame takes several minutes.' }),
+    ...rows, actions, el('p', { className: 'fine' }, signOutButton()));
+}
+
+function signOutButton() {
+  return el('button', { className: 'linkish', type: 'button', textContent: 'Sign out of Aura', onclick: async () => {
+    const account = await api('/api/account/sign-out', { method: 'POST' }).catch(() => ({ signed_in: false }));
+    if (account.signed_in) toast('Still signed in through the login saved in .env'); else showSignIn();
+  } });
+}
+
+function showSyncProgress(status) {
+  const bar = el('i');
+  bar.style.width = status.total ? `${Math.min(100, Math.round(100 * status.done / status.total))}%` : '0%';
+  showSetup(
+    el('h2', { textContent: 'Getting your photos…' }),
+    el('p', { textContent: status.message || 'Starting' }),
+    el('div', { className: 'bar' }, bar),
+    el('p', { className: 'fine', textContent: 'Leave this page open. The people found so far appear as soon as there are enough photos to group. Nothing on your frames is changed.' }));
+}
+
+// While photos load: the blocking screen until the first people are grouped,
+// then the People tab with a slim strip at the top, refreshed as it goes.
+let syncTicks = 0;
+const inSetup = () => document.body.dataset.setup === 'true';
+function renderLoadStrip() {
+  const status = state.loading;
+  $('loadstrip').hidden = !status || inSetup();
+  if (!status) return;
+  $('loadstrip-text').textContent = status.message || 'Getting your photos…';
+  $('loadstrip-bar').style.width = status.total ? `${Math.min(100, Math.round(100 * status.done / status.total))}%` : '0%';
+}
+async function browseWhileLoading() {
+  hideSetup();
+  state.view = 'people'; setTabs('people');
+  await showFrames().catch((error) => toast(error.message));
+  renderLoadStrip(); updateStatus();
+}
+function pollSync() {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    let status;
+    try { status = await api('/api/sync/status'); } catch (error) { pollSync(); return; }
+    if (status.state === 'running') {
+      state.loading = status;
+      if (inSetup()) {
+        const found = await api('/api/people').catch(() => null);
+        if (found && found.built_at) await browseWhileLoading(); else showSyncProgress(status);
+      } else {
+        renderLoadStrip();
+        // Not while a name is being typed: re-drawing would throw it away.
+        const typing = document.activeElement && document.activeElement.closest('#people input');
+        if (++syncTicks % 5 === 0 && !typing) {
+          await refreshFrameCounts().catch(() => {});
+          await loadPeople().catch(() => {});
+        }
+      }
+      pollSync(); return;
+    }
+    const fromSetup = inSetup();
+    state.loading = null; renderLoadStrip(); updateStatus();
+    if (state.view === 'people') renderPeople();
+    if (status.state === 'error') {
+      const actions = el('div', { className: 'dlg-actions' },
+        el('button', { className: 'btn primary big', type: 'button', textContent: 'Try again', onclick: startSetup }));
+      if (state.frames.length) actions.append(cancelSetup());
+      showSetup(el('h2', { textContent: 'That did not finish' }), problem(status.message, status.detail), actions);
+      return;
+    }
+    hideSetup();
+    if (fromSetup) { state.view = 'people'; setTabs('people'); }
+    await showFrames().catch((error) => toast(error.message));
+    const result = status.result || { frames: [] };
+    const photos = result.frames.reduce((sum, f) => sum + f.photos, 0);
+    const missed = result.frames.reduce((sum, f) => sum + f.failed, 0);
+    toast(`Loaded ${plural(photos, 'photo')} from ${plural(result.frames.length, 'frame')}` + (missed ? `. ${missed} could not be downloaded.` : ''));
+  }, 1000);
+}
+$('frames-btn').addEventListener('click', startSetup);
+
+/* ---------- using it from a phone on the same wifi ---------- */
+// On the phone the page is reached by the computer's wifi address, not by
+// one of this computer's own names.
+const REMOTE = !['127.0.0.1', 'localhost', '[::1]'].includes(location.hostname);
+const phone = { timer: null, seen: '' };
+const PHONE_CAN = 'From the phone you can look through people and photos, mark “not them”, and remove photos with the same confirmation as here. You cannot sign in or out from the phone, or get photos from Aura: a password must not cross the wifi unencrypted.';
+const PHONE_PLAIN = 'The phone reaches this computer over your wifi without encryption: anyone on the same wifi could in principle watch what the phone sees, photos included. Use this only on your home network, and press Stop when you are done.';
+function phoneButton(status) {
+  $('phone-btn').textContent = status && status.on ? 'Phone: on' : 'Use on my phone';
+}
+function showPhone(status, trouble) {
+  phoneButton(status);
+  phone.seen = JSON.stringify([status.on, status.link, status.phones]);
+  const card = $('dlg-card'); card.textContent = ''; card.dataset.busy = 'false'; card.dataset.phone = 'true';
+  const close = el('button', { className: 'btn', type: 'button', textContent: 'Close', onclick: closeDialog });
+  card.append(el('h2', { id: 'dlg-title', textContent: 'Use on my phone' }));
+  if (!status.on) {
+    card.append(el('p', { textContent: 'This lets a phone on the same wifi use this page. It stays off until you turn it on, and turns off when you close the app.' }),
+      el('p', { textContent: PHONE_CAN }), el('p', { className: 'caution', textContent: PHONE_PLAIN }));
+    if (trouble) card.append(problem(trouble.message, trouble.detail));
+    const go = el('button', { className: 'btn primary', type: 'button', textContent: 'Turn on' });
+    go.addEventListener('click', async () => {
+      go.disabled = true; go.textContent = 'Turning on…';
+      try { showPhone(await api('/api/phone/start', post({}))); pollPhone(); }
+      catch (error) { showPhone({ on: false }, error); }
+    });
+    card.append(el('div', { className: 'dlg-actions' }, close, go));
+    showDialog(); return;
+  }
+  if (status.link) {
+    const qr = el('div', { className: 'phone-qr' });
+    qr.innerHTML = status.qr;  // drawn on this computer; the link is sent nowhere
+    qr.append(el('div', { className: 'phone-link', textContent: status.link }));
+    card.append(el('p', { textContent: 'Scan this code with the phone’s camera, or type the link into the phone’s browser. The link works once, within 10 minutes.' }), qr);
+  } else {
+    card.append(el('p', { textContent: status.link_used ? 'The link has been used. To connect another phone, make a new link.' : 'The link is out of date. Make a new one.' }));
+  }
+  card.append(el('p', { textContent: `This computer’s address on your wifi: ${status.address}` }));
+  if (status.phones) card.append(el('p', { className: 'phone-state', textContent: status.phones === 1 ? 'A phone is connected.' : `${status.phones} phones are connected.` }));
+  card.append(el('p', { textContent: PHONE_CAN }), el('p', { className: 'caution', textContent: PHONE_PLAIN }));
+  const fresh = el('button', { className: 'btn', type: 'button', textContent: status.link ? 'New link' : 'Link another phone' });
+  fresh.addEventListener('click', async () => {
+    try { showPhone(await api('/api/phone/new-link', post({}))); } catch (error) { toast(error.message); }
+  });
+  const stop = el('button', { className: 'btn danger', type: 'button', textContent: 'Stop' });
+  stop.addEventListener('click', async () => {
+    clearTimeout(phone.timer);
+    try { showPhone(await api('/api/phone/stop', post({}))); } catch (error) { toast(error.message); }
+  });
+  card.append(el('div', { className: 'dlg-actions' }, close, fresh, stop));
+  showDialog();
+}
+// While the dialog is open: show a phone as soon as it connects.
+function pollPhone() {
+  clearTimeout(phone.timer);
+  phone.timer = setTimeout(async () => {
+    if ($('dlg-card').dataset.phone !== 'true') return;
+    const status = await api('/api/phone').catch(() => null);
+    if (!status || $('dlg-card').dataset.phone !== 'true') return;
+    if (JSON.stringify([status.on, status.link, status.phones]) !== phone.seen) showPhone(status);
+    if (status.on) pollPhone();
+  }, 2000);
+}
+$('phone-btn').addEventListener('click', async () => {
+  try { const status = await api('/api/phone'); showPhone(status); if (status.on) pollPhone(); }
+  catch (error) { toast(error.message); }
+});
+if (REMOTE) {
+  $('frames-btn').hidden = true; $('phone-btn').hidden = true; $('remote-note').hidden = false;
+} else {
+  api('/api/phone').then(phoneButton).catch(() => {});
+}
+
+loadFrames().catch((error) => { $('empty').hidden = false; $('empty').textContent = error.message; });
+checkForUpdate(false);
+</script>
+</body>
+</html>

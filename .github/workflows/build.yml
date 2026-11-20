@@ -1,0 +1,86 @@
+# Builds the desktop app on a version tag (v1.2.3) and attaches it to a release.
+#
+# STATUS: neither job has been run on GitHub yet. The macOS build, signing and
+# notarization scripts were run locally on one Mac (2026-11-20). The Windows job has NOT been tested by anyone: expect to fix
+# it on the first run.
+#
+# macOS signing and notarization run when these are set in the repository
+# (Settings > Secrets and variables > Actions; see packaging/README.md):
+#   secrets  APPLE_CERTIFICATE_P12        base64 of the exported Developer ID .p12
+#            APPLE_CERTIFICATE_PASSWORD   the password chosen when exporting it
+#            APPLE_ID                     Apple ID email used for notarization
+#            APPLE_APP_PASSWORD           app-specific password for that Apple ID
+#   variable APPLE_TEAM_ID                10-character team id
+# Without them a manual run still builds, unsigned. A tagged release never
+# publishes an unsigned dmg: the job fails instead.
+name: build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    runs-on: macos-14
+    env:
+      CAN_SIGN: ${{ secrets.APPLE_CERTIFICATE_P12 != '' && secrets.APPLE_ID != '' && secrets.APPLE_APP_PASSWORD != '' && vars.APPLE_TEAM_ID != '' }}
+      RELEASE: ${{ startsWith(github.ref, 'refs/tags/') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv python install 3.12
+      - name: Refuse to release unsigned
+        if: env.RELEASE == 'true' && env.CAN_SIGN != 'true'
+        run: |
+          echo "This is a release tag, but the Apple signing secrets are not all set." >&2
+          echo "See packaging/README.md (In GitHub Actions)." >&2
+          exit 1
+      - run: packaging/build_mac.sh
+      - name: Import the signing certificate
+        if: env.CAN_SIGN == 'true'
+        env:
+          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: packaging/ci_keychain.sh import
+      - name: Sign, notarize and staple
+        if: env.CAN_SIGN == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: packaging/sign_and_notarize.sh
+      - name: Remove the signing keychain
+        if: always() && env.CAN_SIGN == 'true'
+        run: packaging/ci_keychain.sh delete
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frame-tidy-macos${{ env.CAN_SIGN != 'true' && '-unsigned' || '' }}
+          path: dist/Frame Tidy.dmg
+      - if: env.RELEASE == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Frame Tidy.dmg
+
+  windows:
+    # UNTESTED. Produces a zipped one-folder app (no installer).
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv python install 3.12
+      - run: uv sync --group build
+      - run: uv run --group build pyinstaller --noconfirm --clean --distpath dist --workpath build packaging/frame_tidy.spec
+      - run: Compress-Archive -Path "dist/Frame Tidy" -DestinationPath "dist/Frame-Tidy-windows.zip"
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frame-tidy-windows
+          path: dist/Frame-Tidy-windows.zip
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Frame-Tidy-windows.zip

@@ -1,0 +1,55 @@
+[project]
+name = "aura-mcp"
+version = "0.1.0"
+description = "MCP server for finding and removing photos of a specific person from Aura frames"
+readme = "README.md"
+authors = [
+    { name = "AJ Wallace", email = "24554274+ajwallacemusic@users.noreply.github.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastembed>=0.9.1",
+    "httpx>=0.28.1",
+    "insightface>=2.1",
+    "mcp[cli]>=2.3.0",
+    "numpy>=2.5.5",
+    "onnxruntime>=1.32.0",
+    # 5.1 only ships macOS 15+ wheels; on macOS 14 it compiles from source.
+    "opencv-python-headless>=4.14,<5",
+    "python-dotenv>=1.2.4",
+    "pywebview>=6.2.1",
+    "scipy>=1.13",
+    "segno>=1.6.6",
+    "starlette>=1.10.0",
+    "uvicorn>=0.54.0",
+]
+
+[project.scripts]
+aura-app = "aura_mcp.app:main"
+aura-mcp = "aura_mcp.server:main"
+aura-mock = "aura_mcp.mock_aura:main"
+aura-review = "aura_mcp.review:main"
+
+[build-system]
+requires = ["uv_build>=0.9.6,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+# insightface depends on the full `opencv-python`, which would install a second
+# copy of `cv2` on top of the headless build. Drop it: the headless package
+# provides the same module.
+override-dependencies = ["opencv-python ; sys_platform == 'never'"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[dependency-groups]
+build = [
+    "pyinstaller>=6.22.3",
+]
+dev = [
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.5.0",
+]

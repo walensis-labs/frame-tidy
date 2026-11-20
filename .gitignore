@@ -1,0 +1,48 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets
+.env
+# The Aura sign-in saved by the review page (a token, not the password)
+/session.json
+
+# Local photo cache and review folder (personal photos: never commit)
+cache/*
+flagged/*
+!cache/.gitkeep
+!flagged/.gitkeep
+
+# Mock frame for local testing (downloaded test photos, mock cache)
+mock/
+
+# Review selections and reference face crops (personal data)
+selections/
+references/
+
+# Everyone found in the photos: names, faces and face crops (personal data)
+/people/
+
+# Local copies of photos removed from a frame (personal data)
+removed/
+
+# iOS traffic capture output
+aura_capture*.jsonl
+*.mitm
+
+# Helper worktrees
+/.claude/
+# Build output
+/dist/
+/build/
+
+# Saved-data format marker and pre-upgrade copies (personal data)
+/data-version.json
+/backups/
