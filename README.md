@@ -35,7 +35,7 @@ Applications. On other systems it runs from source.
 
 ## Install and first run
 
-**On a Mac:** download `Frame Tidy.dmg` from the
+**On a Mac:** download the `.dmg` file from the
 [latest release](https://github.com/walensis-labs/frame-tidy/releases/latest),
 open it, and drag Frame Tidy into Applications. The app is signed and
 notarized by Apple, so the first time you open it macOS only asks you to
