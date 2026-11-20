@@ -13,15 +13,15 @@ You have one or more Aura frames with a lot of photos on them, and you want
 someone gone from them: an ex, a photo you no longer want on display. Doing
 that by hand in the Aura app means finding each photo yourself.
 
-You should be comfortable installing a program from a terminal for now (see
-"Install and first run"). There is no packaged download yet.
+On a Mac it is a normal download: open the dmg and drag the app into
+Applications. On other systems it runs from source.
 
 ## What you need
 
-- A computer. It has been built and run on a Mac. Windows and Linux are
-  untested. Frame Tidy is not a phone app. A phone
-  can be used once the computer has set things up (see "Using it from a
-  phone").
+- A Mac with Apple silicon (M1 or later) and macOS 14 or later, for the
+  download. Windows and Linux can run it from source but are untested.
+  Frame Tidy is not a phone app. A phone can be used once the computer has set
+  things up (see "Using it from a phone").
 - Your Aura account email and password.
 - To run from source only: [uv](https://docs.astral.sh/uv/), a tool that installs and runs the app.
 - Disk space. The face model is about 290 MB. Loading keeps a medium-size
@@ -36,11 +36,17 @@ You should be comfortable installing a program from a terminal for now (see
 ## Install and first run
 
 **On a Mac:** download `Frame Tidy.dmg` from the
-[Releases page](https://github.com/walensis-labs/frame-tidy/releases), open
-it, and drag Frame Tidy into Applications. The app is signed and notarized by
-Apple. It needs an Apple-silicon Mac (M1 or later) with macOS 14 or later. It checks for a newer version at most once a
-day and shows a note when there is one; to update, download the new dmg the same
-way. Your data stays where it is.
+[latest release](https://github.com/walensis-labs/frame-tidy/releases/latest),
+open it, and drag Frame Tidy into Applications. The app is signed and
+notarized by Apple, so the first time you open it macOS only asks you to
+confirm that you want to open an app downloaded from the internet.
+
+**Updating:** the app checks for a newer version at most once a day and shows a
+note when there is one. Download the new dmg and drag it into Applications
+again, replacing the old app. Your data stays where it is. If a new version
+changes how data is saved, it first copies your saved files to a `backups`
+folder in the data folder; an older version will refuse to open data saved by
+a newer one rather than damage it.
 
 **From source** (any system, needs [uv](https://docs.astral.sh/uv/)):
 
@@ -78,11 +84,20 @@ default browser. It then walks you through these steps:
    yet, press **Find people**.
    - **Rename** gives a person a name. **Hide** tucks them away. **Merge**
      on two tiles joins two groups that are the same person.
+   - Each tile shows how many photos of that person are on the frame you are
+     looking at, and below it how many are on all your frames.
    - Click a person to see their photos. Every match arrives already ticked
      for removal. Press the cross on any photo that is not them: it is then
      unticked and left out.
-   - With two or more frames loaded, the **All frames** view shows every
-     photo once, with an "on 2 frames" badge on photos that are on several.
+   - **More of them?** Under a person, the app suggests other groups that look
+     like the same person. Press **Look** to see every face in a group, open
+     any of them full size (arrow keys move, Space ticks), and add only the
+     ones that really are them.
+   - **Which frames are they on?** While you look at a person, the frame menu
+     lists the frames they appear on, with a count for each, and the frames
+     they are not on. With two or more frames loaded, **All frames** shows
+     every photo once, with an "on 2 frames" badge on photos that are on
+     several.
 6. **Remove.** Press **Remove** and read the dialog (see the next sections).
 
 Other tabs: **All** (every photo), **Flagged** (matches from a search, with
@@ -189,8 +204,7 @@ Stop in the same dialog when you are done. It also stops when you quit the app.
   by that, and you agree to InsightFace's terms yourself in the first step.
   Read them if you are not sure that your use is covered.
 - **Early software.** It has been tried on a real account and on a test
-  service, not on many people's frames. The macOS app is unsigned and the
-  Windows build is untested.
+  service, not on many people's frames. The Windows build is untested.
 
 ---
 
@@ -304,9 +318,11 @@ user section covers:
 - **People:** found by clustering cached face embeddings (average linkage,
   cosine >= 0.40), pooled across frames by photo id. The store is
   `people/people.json`; face crops are in `people/avatars/`. "More of them?"
-  offers other groups that look like the same person ("Same person" merges,
-  "No" is remembered); **Undo last merge** reverses the latest merge until the
-  next "Find people again".
+  offers other groups that look like the same person: "Same person" merges,
+  "No" is remembered, and **Look** opens the group so only some of its faces
+  can be moved over (those faces stay with the person when people are found
+  again). **Undo last merge** reverses the latest merge or move until the next
+  "Find people again".
 - A photo marked "not them" is left out on every frame it is on. Opening a
   different person clears the previous person's ticks (hand-picked photos
   stay), so remove one person at a time.
@@ -354,7 +370,7 @@ user section covers:
   photos fell into one group and no group mixed two people. The store is
   `people/people.json`; face crops are in `people/avatars/`. One build handles
   up to 10,000 faces.
-- `cache/`, `flagged/`, `removed/`, `selections/`, `references/`, `people/`, `mock/`, `session.json` and `.env` are gitignored. They hold personal photos and a login: never commit them.
+- `cache/`, `flagged/`, `removed/`, `selections/`, `references/`, `people/`, `backups/`, `mock/`, `data-version.json`, `session.json` and `.env` are gitignored. They hold personal photos and a login: never commit them.
 
 ## Face model
 
@@ -432,10 +448,23 @@ To run the app against the mock without touching a real account, set
 `AURA_IMAGE_BASE_URL` at the mock, set `AURA_NO_UPDATE_CHECK=1`, and make sure
 `AURA_EMAIL` and `AURA_PASSWORD` are not set.
 
-## Packaging and publishing
+Saved data has a format version (`data-version.json`). A change to how
+anything is saved adds an upgrade step in `src/aura_mcp/migrations.py` and a
+frozen copy of the old format under `tests/fixtures/`; see the notes at the top
+of that file.
+
+## Packaging and releases
 
 Building, signing and releasing the macOS and Windows apps: see
 `packaging/README.md`.
+
+## Problems and contributions
+
+Report bugs and ideas in [Issues](https://github.com/walensis-labs/frame-tidy/issues).
+Never attach real photos or your `session.json`. Report security problems
+privately, as described in `SECURITY.md`. Pull requests are welcome; run
+`uv run pytest` first, and test anything visual against the mock, not a real
+account.
 
 ## Licence
 
