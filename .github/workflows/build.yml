@@ -15,6 +15,10 @@
 #            APPLE_ID                     Apple ID email used for notarization
 #            APPLE_APP_PASSWORD           app-specific password for that Apple ID
 #   variable APPLE_TEAM_ID                10-character team id
+#   secret   SPARKLE_PRIVATE_KEY          private update key (generate_keys -x), for the
+#                                         appcast that installed copies update from
+# A release tag also needs docs/release-notes/<version>.md (the release text and
+# what Sparkle shows) and packaging/sparkle_public_key.txt.
 # Without them a manual run still builds, unsigned. A tagged release never
 # publishes an unsigned dmg: the job fails instead.
 name: build
@@ -33,15 +37,22 @@ jobs:
     env:
       CAN_SIGN: ${{ secrets.APPLE_CERTIFICATE_P12 != '' && secrets.APPLE_ID != '' && secrets.APPLE_APP_PASSWORD != '' && vars.APPLE_TEAM_ID != '' }}
       RELEASE: ${{ startsWith(github.ref, 'refs/tags/') }}
+      HAS_UPDATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - name: Refuse to release unsigned
-        if: env.RELEASE == 'true' && env.CAN_SIGN != 'true'
+      - name: Version
+        run: echo "VERSION=$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')" >> "$GITHUB_ENV"
+      - name: Refuse to release anything incomplete
+        if: env.RELEASE == 'true'
         run: |
-          echo "This is a release tag, but the Apple signing secrets are not all set." >&2
-          echo "See packaging/README.md (In GitHub Actions)." >&2
-          exit 1
+          problems=0
+          if [ "$CAN_SIGN" != true ]; then echo "The Apple signing secrets are not all set." >&2; problems=1; fi
+          if [ "$HAS_UPDATE_KEY" != true ]; then echo "The SPARKLE_PRIVATE_KEY secret is not set." >&2; problems=1; fi
+          if [ ! -s packaging/sparkle_public_key.txt ]; then echo "packaging/sparkle_public_key.txt is missing." >&2; problems=1; fi
+          if [ ! -s "docs/release-notes/$VERSION.md" ]; then echo "docs/release-notes/$VERSION.md is missing." >&2; problems=1; fi
+          if [ "$GITHUB_REF_NAME" != "v$VERSION" ]; then echo "Tag $GITHUB_REF_NAME does not match version $VERSION in pyproject.toml." >&2; problems=1; fi
+          if [ "$problems" != 0 ]; then echo "See packaging/README.md (Release)." >&2; exit 1; fi
       - name: Make sure Rosetta is installed (for the Intel half)
         run: softwareupdate --install-rosetta --agree-to-license || true
       - run: packaging/build_mac.sh
@@ -62,9 +73,18 @@ jobs:
         if: always() && env.CAN_SIGN == 'true'
         run: packaging/ci_keychain.sh delete
       - name: Name the dmg by version
+        run: mv "dist/Frame Tidy.dmg" "dist/Frame-Tidy-$VERSION.dmg"
+      - name: Sign the update and write the appcast
+        if: env.RELEASE == 'true'
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
-          VERSION="$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')"
-          mv "dist/Frame Tidy.dmg" "dist/Frame-Tidy-$VERSION.dmg"
+          KEY="$RUNNER_TEMP/update.key"
+          umask 077
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$KEY"
+          python3 packaging/make_appcast.py "dist/Frame-Tidy-$VERSION.dmg" "$VERSION" \
+            "docs/release-notes/$VERSION.md" dist/appcast.xml --key-file "$KEY"
+          rm -f "$KEY"
       - uses: actions/upload-artifact@v4
         with:
           name: frame-tidy-macos${{ env.CAN_SIGN != 'true' && '-unsigned' || '' }}
@@ -72,7 +92,11 @@ jobs:
       - if: env.RELEASE == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/Frame-Tidy-*.dmg
+          name: Frame Tidy ${{ env.VERSION }}
+          body_path: docs/release-notes/${{ env.VERSION }}.md
+          files: |
+            dist/Frame-Tidy-*.dmg
+            dist/appcast.xml
 
   windows:
     # UNTESTED. Produces a zipped one-folder app (no installer).

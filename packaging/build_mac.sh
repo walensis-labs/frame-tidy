@@ -2,7 +2,7 @@
 # Build "Frame Tidy.app" and "Frame Tidy.dmg" into dist/.
 #
 #   packaging/build_mac.sh                  Universal: Apple silicon and Intel in one app
-#   ARCH=arm64  packaging/build_mac.sh      Apple silicon only (quicker, for testing)
+#   ARCH=arm64  packaging/build_mac.sh      Apple silicon only (quicker, for testing; no updater)
 #   ARCH=x86_64 packaging/build_mac.sh      Intel only (works on Apple silicon through Rosetta)
 #
 # The app is built for macOS 12.3 and later: every library is installed in the
@@ -45,17 +45,17 @@ if [ "$ARCH" = universal ]; then
   build_one arm64
   build_one x86_64
   python3 packaging/make_universal.py "build/app-arm64/Frame Tidy.app" "build/app-x86_64/Frame Tidy.app" "$APP"
+  # Sparkle, the updater (Universal already). Its XPC services are only for
+  # sandboxed apps, which this is not.
+  packaging/fetch_sparkle.sh
+  ditto build/sparkle/Sparkle.framework "$APP/Contents/Frameworks/Sparkle.framework"
+  rm -rf "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices" \
+         "$APP/Contents/Frameworks/Sparkle.framework/XPCServices"
   python3 packaging/check_app.py "$APP" arm64 x86_64
   # Joining breaks PyInstaller's local signatures, and Apple silicon will not run
   # unsigned code. Sign locally (ad hoc) so the app runs on this Mac;
   # sign_and_notarize.sh replaces these with the real signature.
-  find "$APP" -type f -print0 | while IFS= read -r -d '' f; do
-    [ "$f" = "$APP/Contents/MacOS/Frame Tidy" ] && continue
-    if file -b "$f" | grep -q '^Mach-O'; then printf '%s\0' "$f"; fi
-  done | xargs -0 -n 40 codesign --force --sign - 2>/dev/null
-  codesign --force --sign - "$APP/Contents/MacOS/Frame Tidy" 2>/dev/null
-  codesign --force --sign - "$APP" 2>/dev/null
-  codesign --verify --deep --strict "$APP"
+  packaging/codesign_app.sh "$APP" -
 else
   build_one "$ARCH"
   cp -R "build/app-$ARCH/Frame Tidy.app" "$APP"
@@ -72,6 +72,12 @@ cp -R "$APP" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
 rm -f "dist/Frame Tidy.dmg"
 hdiutil create -volname "Frame Tidy" -srcfolder "$STAGE" -ov -format UDZO "dist/Frame Tidy.dmg"
+test -s "dist/Frame Tidy.dmg" || {
+  echo "ERROR: the dmg was not made. If hdiutil said 'Operation not permitted', macOS's" >&2
+  echo "App Management protection is blocking this terminal from copying a Frame Tidy app:" >&2
+  echo "allow it in System Settings > Privacy & Security > App Management." >&2
+  exit 1
+}
 rm -rf "$STAGE"
 
 du -sh "$APP" "dist/Frame Tidy.dmg"

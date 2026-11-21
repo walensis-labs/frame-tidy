@@ -18,6 +18,7 @@ import threading
 import time
 from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 APP_NAME = "Frame Tidy"
 HOST = "127.0.0.1"
@@ -102,7 +103,7 @@ def main(argv: list[str] | None = None) -> None:
         if args.no_window:
             _wait(thread)
         else:
-            shown = False if args.browser else _show_window(url)
+            shown = False if args.browser else _show_window(url, review)
             if not shown:
                 import webbrowser
 
@@ -160,13 +161,41 @@ def _wait(thread: threading.Thread) -> None:
         pass
 
 
-def _show_window(url: str) -> bool:
-    """Open our own window and block until it is closed. False if that is not possible."""
+def _show_window(url: str, review: Any = None) -> bool:
+    """Open our own window and block until it is closed. False if that is not possible.
+
+    In the packaged macOS app this also starts Sparkle, which checks for
+    updates once a day, and adds Help > Check for Updates…
+    """
     try:
         import webview
 
-        webview.create_window(APP_NAME, url, width=1280, height=860, min_size=(800, 600))
-        webview.start()
+        from aura_mcp import updater
+
+        menu = []
+        if updater.available():
+            from webview.menu import Menu, MenuAction
+
+            menu = [Menu("Help", [MenuAction("Check for Updates…",
+                                             lambda: updater.on_main_thread(updater.check_now))])]
+
+        def started() -> None:
+            if not updater.available():
+                return
+
+            def begin() -> None:
+                try:
+                    running = updater.start()
+                except Exception as exc:  # noqa: BLE001 - updates are a convenience, never fatal
+                    print(f"Automatic updates are off: {exc}", file=sys.stderr, flush=True)
+                    running = False
+                if review is not None:
+                    review.auto_update = running
+
+            updater.on_main_thread(begin)
+
+        webview.create_window(APP_NAME, url, width=1280, height=860, min_size=(800, 600), menu=menu)
+        webview.start(started)
         return True
     except Exception as exc:  # no GUI toolkit available, headless session, ...
         print(f"Could not open a window ({exc}); using the browser.", file=sys.stderr)

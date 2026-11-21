@@ -586,7 +586,7 @@ def test_the_desktop_window_stops_the_phone_listener_when_it_closes(tmp_path, mo
     events = []
     webview = types.ModuleType("webview")
     webview.create_window = lambda title, url, **kwargs: events.append(("window", title))
-    webview.start = lambda: events.append(("closed",))
+    webview.start = lambda *args, **kwargs: events.append(("closed",))
     monkeypatch.setitem(sys.modules, "webview", webview)
     monkeypatch.setenv("AURA_MCP_HOME", str(tmp_path))
     monkeypatch.setattr(uvicorn, "Server", Server)

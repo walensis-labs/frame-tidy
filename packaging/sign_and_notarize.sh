@@ -2,6 +2,7 @@
 # Sign "Frame Tidy.app" with a Developer ID, notarize it with Apple, staple the
 # ticket and rebuild the .dmg. Run by the GitHub build (see .github/workflows/build.yml)
 # or by hand. First run by hand 2026-11-20: app and dmg notarized and stapled.
+# NOTARIZE=0 signs only (for testing updates locally; such a build must not be shared).
 #
 # Environment:
 #   APPLE_TEAM_ID            10-character team id (required)
@@ -31,33 +32,22 @@ echo "Signing as: $APPLE_SIGNING_IDENTITY"
 
 APP="dist/Frame Tidy.app"
 DMG="dist/Frame Tidy.dmg"
-ENT="packaging/entitlements.plist"
 test -d "$APP"
 
-# Sign every nested binary first, then the bundle (hardened runtime is required
-# for notarization). Every Mach-O file counts, with or without an extension: notarization refuses
-# the app if any one of them is unsigned. The main program is signed last.
-MAIN="$APP/Contents/MacOS/Frame Tidy"
-find "$APP" -type f -print0 |
-  while IFS= read -r -d '' f; do
-    [ "$f" = "$MAIN" ] && continue
-    if file -b "$f" | grep -q '^Mach-O'; then printf '%s\0' "$f"; fi
-  done |
-  xargs -0 -n 20 codesign --force --timestamp --options runtime \
-    --entitlements "$ENT" --sign "$APPLE_SIGNING_IDENTITY"
-codesign --force --timestamp --options runtime --entitlements "$ENT" \
-  --sign "$APPLE_SIGNING_IDENTITY" "$MAIN"
-codesign --force --timestamp --options runtime --entitlements "$ENT" \
-  --sign "$APPLE_SIGNING_IDENTITY" "$APP"
+# Sign every binary, nested bundle (Sparkle) and the app, inside out, with the
+# hardened runtime that notarization requires.
+packaging/codesign_app.sh "$APP" "$APPLE_SIGNING_IDENTITY"
 codesign --verify --deep --strict --verbose=2 "$APP"
 
-# Notarize the app (zip it for upload), then staple the ticket to it.
-ZIP="$(mktemp -d)/FrameTidy.zip"
-ditto -c -k --keepParent "$APP" "$ZIP"
-xcrun notarytool submit "$ZIP" "${NOTARY[@]}" --wait
-# Stapling fails unless Apple accepted the upload, so a rejection stops here.
-xcrun stapler staple "$APP"
-spctl --assess --type execute -v "$APP"
+if [ "${NOTARIZE:-1}" != 0 ]; then
+  # Notarize the app (zip it for upload), then staple the ticket to it.
+  ZIP="$(mktemp -d)/FrameTidy.zip"
+  ditto -c -k --keepParent "$APP" "$ZIP"
+  xcrun notarytool submit "$ZIP" "${NOTARY[@]}" --wait
+  # Stapling fails unless Apple accepted the upload, so a rejection stops here.
+  xcrun stapler staple "$APP"
+  spctl --assess --type execute -v "$APP"
+fi
 
 # Rebuild the dmg around the stapled app, then sign, notarize and staple it.
 STAGE="$(mktemp -d)"
@@ -65,8 +55,18 @@ cp -R "$APP" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
 rm -f "$DMG"
 hdiutil create -volname "Frame Tidy" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+test -s "$DMG" || {
+  echo "ERROR: the dmg was not made. If hdiutil said 'Operation not permitted', macOS's" >&2
+  echo "App Management protection is blocking this terminal from copying a Frame Tidy app:" >&2
+  echo "allow it in System Settings > Privacy & Security > App Management." >&2
+  exit 1
+}
 rm -rf "$STAGE"
 codesign --force --timestamp --sign "$APPLE_SIGNING_IDENTITY" "$DMG"
+if [ "${NOTARIZE:-1}" = 0 ]; then
+  echo "Signed, not notarized (NOTARIZE=0): $DMG is for local testing only."
+  exit 0
+fi
 xcrun notarytool submit "$DMG" "${NOTARY[@]}" --wait
 xcrun stapler staple "$DMG"
 spctl --assess --type open --context context:primary-signature -v "$DMG"

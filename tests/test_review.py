@@ -1627,9 +1627,9 @@ def test_version_when_github_cannot_be_reached(root, monkeypatch):
 
     first = client.get("/api/version")
     assert first.status_code == 200
-    assert first.json() == {"version": APP_VERSION, "latest": None, "newer": False}
+    assert first.json() == {"version": APP_VERSION, "latest": None, "newer": False, "auto_update": False}
     review._update_thread.join(5)
-    assert client.get("/api/version").json() == {"version": APP_VERSION, "latest": None, "newer": False}
+    assert client.get("/api/version").json() == {"version": APP_VERSION, "latest": None, "newer": False, "auto_update": False}
     # The failure is remembered for a day: no second try on the next page load.
     assert asked == [1]
     assert json.loads((root / "update-check.json").read_text())["latest"] is None
@@ -1641,14 +1641,26 @@ def test_version_reports_a_newer_release(root, monkeypatch):
     client = TestClient(review.app(), base_url="http://127.0.0.1")
     client.get("/api/version")
     review._update_thread.join(5)
-    assert client.get("/api/version").json() == {"version": APP_VERSION, "latest": "v99.0.0", "newer": True}
+    assert client.get("/api/version").json() == {"version": APP_VERSION, "latest": "v99.0.0", "newer": True, "auto_update": False}
 
 
 def test_the_update_check_can_be_turned_off(root):
     asked = []
     review = Review(root, FaceMatcher(app=FakeApp()), update_check=lambda: asked.append(1) or "v9.0.0")
     client = TestClient(review.app(), base_url="http://127.0.0.1")
-    assert client.get("/api/version").json() == {"version": APP_VERSION, "latest": None, "newer": False}
+    assert client.get("/api/version").json() == {"version": APP_VERSION, "latest": None, "newer": False, "auto_update": False}
+    assert asked == [] and review._update_thread is None
+
+
+def test_an_app_that_updates_itself_skips_the_update_note(root):
+    """With Sparkle running, Sparkle tells people about updates: the page stays quiet
+    and GitHub is not asked twice."""
+    asked = []
+    review = Review(root, FaceMatcher(app=FakeApp()), update_check=lambda: asked.append(1) or "v99.0.0")
+    review.auto_update = True
+    client = TestClient(review.app(), base_url="http://127.0.0.1")
+    assert client.get("/api/version").json() == {
+        "version": APP_VERSION, "latest": None, "newer": False, "auto_update": True}
     assert asked == [] and review._update_thread is None
 
 

@@ -1,5 +1,6 @@
 # PyInstaller spec shared by the macOS and Windows builds.
 # Run from the repository root:  uv run --group build pyinstaller packaging/frame_tidy.spec
+import os
 import sys
 import tomllib
 from pathlib import Path
@@ -66,6 +67,23 @@ exe = EXE(  # noqa: F821
 )
 coll = COLLECT(exe, a.binaries, a.datas, name=NAME, upx=False)  # noqa: F821
 
+# Sparkle, the macOS updater (see src/aura_mcp/updater.py). The public half of
+# the update signing key is committed in packaging/sparkle_public_key.txt;
+# SPARKLE_PUBLIC_KEY overrides it for a local test with a throwaway key.
+# Without a key the app is built without automatic updates.
+FEED_URL = "https://github.com/walensis-labs/frame-tidy/releases/latest/download/appcast.xml"
+_key_file = ROOT / "packaging/sparkle_public_key.txt"
+SPARKLE_KEY = os.environ.get("SPARKLE_PUBLIC_KEY") or (
+    _key_file.read_text().strip() if _key_file.is_file() else "")
+updates = {
+    "SUFeedURL": FEED_URL,
+    "SUEnableAutomaticChecks": True,
+    "SUScheduledCheckInterval": 86400,
+    "SUAllowsAutomaticUpdates": True,
+} if SPARKLE_KEY else {}
+if SPARKLE_KEY:
+    updates["SUPublicEDKey"] = SPARKLE_KEY
+
 if sys.platform == "darwin":
     app = BUNDLE(  # noqa: F821
         coll,
@@ -78,5 +96,6 @@ if sys.platform == "darwin":
             "CFBundleVersion": VERSION,
             "NSHighResolutionCapable": True,
             "LSMinimumSystemVersion": "12.3",  # SciPy needs 12.3; build_mac.sh checks every binary against this
+            **updates,
         },
     )

@@ -453,6 +453,9 @@ class Review:
         self.model_job = Job()
         self.search_model_job = Job()
         self.update_check = update_check or latest_release_tag
+        # True once Sparkle runs in the packaged app (set by app.py): it tells
+        # people about updates, so the page shows no note of its own.
+        self.auto_update = False
         self._update_lock = threading.Lock()
         self._update_thread: threading.Thread | None = None
         # Loading photos, finding people and removing each rewrite a frame's
@@ -1891,8 +1894,9 @@ class Review:
         """This version, and the newest release if one is known. Never waits:
         a look at GitHub runs in the background at most once a day."""
         current = app_version()
-        answer: dict[str, Any] = {"version": current, "latest": None, "newer": False}
-        if os.environ.get(UPDATE_CHECK_ENV):
+        answer: dict[str, Any] = {
+            "version": current, "latest": None, "newer": False, "auto_update": self.auto_update}
+        if os.environ.get(UPDATE_CHECK_ENV) or self.auto_update:
             return JSONResponse(answer)
         cached = store._read_json(self._update_file(), {})
         cached = cached if isinstance(cached, dict) else {}

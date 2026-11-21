@@ -87,13 +87,53 @@ publish an unsigned dmg. Set up once:
 Then run the workflow by hand (Actions > build > Run workflow) and check the
 artifact opens on another Mac before tagging a release.
 
+## Automatic updates (Sparkle)
+
+The Universal app bundles [Sparkle](https://sparkle-project.org) 2.10.1
+(`packaging/fetch_sparkle.sh`, pinned by checksum). Once a day it reads
+`https://github.com/walensis-labs/frame-tidy/releases/latest/download/appcast.xml`,
+the appcast attached to the newest release, and offers the update with its
+release notes; Help > Check for Updates… looks at once. It installs an update
+only if the dmg is signed with the update key (`SUPublicEDKey`, from
+`packaging/sparkle_public_key.txt`) and the app inside is signed by the same
+Apple developer. Without the public key file the app is built without updates.
+Code: `src/aura_mcp/updater.py`; settings: `packaging/frame_tidy.spec`.
+
+**The update key** (once, by the owner): `build/sparkle/bin/generate_keys`
+creates it in your login keychain and prints the public key; save that line in
+`packaging/sparkle_public_key.txt` and commit it. For GitHub Actions, export the
+private key with `build/sparkle/bin/generate_keys -x update.key`, add the file's
+contents as the secret `SPARKLE_PRIVATE_KEY`, keep a copy in a password manager
+and delete the file. Losing the private key means installed copies can no
+longer update themselves (they would need one manual install of a build with a
+new key), so back it up.
+
+**Testing an update locally:** build two versions with a throwaway key
+(`SPARKLE_PUBLIC_KEY=<test public key>`), sign them with `NOTARIZE=0`, make an
+appcast for the newer one with `make_appcast.py --key-file <test key> --url
+http://localhost:<port>/...`, serve both files, and start the older app with
+`AURA_UPDATE_FEED=http://localhost:<port>/appcast.xml`.
+
 ## Release
 
-1. Bump the version in `pyproject.toml` (the app bundle reads it from there).
-2. Tag and push: `git tag v0.2.0 && git push origin v0.2.0`.
-3. `.github/workflows/build.yml` builds, signs and notarizes the macOS dmg and
-   builds a Windows zip, and attaches them to a release. A tag fails if the
-   signing secrets are missing. The Windows job is untested.
+1. Set the version in `pyproject.toml` (the app reads it from there) and write
+   `docs/release-notes/<version>.md`: it is the release text on GitHub and what
+   Sparkle shows in its update window (paragraphs, `##` headings, `-` lists,
+   **bold**, `code` and links).
+2. Commit, then tag and push: `git tag v0.1.4 && git push origin v0.1.4`.
+3. `.github/workflows/build.yml` builds the Universal app, signs and notarizes
+   it, signs the update and writes `appcast.xml`, and publishes the release
+   with both. It refuses a tag when a signing secret, the update key, the
+   public key file or the notes are missing, or the tag does not match the
+   version. The landing page and installed copies pick up the new release on
+   their own.
+
+By hand instead (on your Mac, with the keychain profile and update key):
+`packaging/build_mac.sh`, `APPLE_TEAM_ID=… packaging/sign_and_notarize.sh`,
+rename the dmg to `Frame-Tidy-<version>.dmg`, then
+`python3 packaging/make_appcast.py dist/Frame-Tidy-<version>.dmg <version>
+docs/release-notes/<version>.md dist/appcast.xml`, and attach both files to a
+release named `v<version>`.
 
 ## Windows
 
