@@ -24,7 +24,7 @@ hidden = (
     + collect_submodules("insightface.utils")
     + collect_submodules("uvicorn")
     + collect_submodules("segno")
-    + ["fastembed", "huggingface_hub", "cv2", "scipy.special._cdflib", "segno"]
+    + ["fastembed", "huggingface_hub", "cv2", "segno"]
 )
 if sys.platform == "win32":
     hidden += ["webview.platforms.edgechromium"]

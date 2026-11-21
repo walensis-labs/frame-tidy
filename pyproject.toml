@@ -1,6 +1,6 @@
 [project]
 name = "aura-mcp"
-version = "0.1.1"
+version = "0.1.2"
 description = "MCP server for finding and removing photos of a specific person from Aura frames"
 readme = "README.md"
 authors = [

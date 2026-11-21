@@ -18,8 +18,8 @@ Applications. On other systems it runs from source.
 
 ## What you need
 
-- A Mac with macOS 12.3 (Monterey) or later, for the download. There is one
-  download for Apple-silicon Macs (M1 and later) and one for Intel Macs.
+- A Mac with macOS 12.3 (Monterey) or later, for the download. The same
+  download works on Apple-silicon (M1 and later) and Intel Macs.
   Windows and Linux can run it from source but are untested.
   Frame Tidy is not a phone app. A phone can be used once the computer has set
   things up (see "Using it from a phone").
@@ -36,11 +36,10 @@ Applications. On other systems it runs from source.
 
 ## Install and first run
 
-**On a Mac:** from the
+**On a Mac:** download the `.dmg` file from the
 [latest release](https://github.com/walensis-labs/frame-tidy/releases/latest),
-download the `apple-silicon` dmg for an M1 or later Mac, or the `intel` dmg
-for an Intel Mac (Apple menu > About This Mac shows which: "Chip: Apple M…"
-or "Processor: … Intel …"). Open it and drag Frame Tidy into Applications. The app is signed and
+open it, and drag Frame Tidy into Applications. It works on Apple-silicon and
+Intel Macs. The app is signed and
 notarized by Apple, so the first time you open it macOS only asks you to
 confirm that you want to open an app downloaded from the internet.
 

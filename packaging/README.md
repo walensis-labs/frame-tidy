@@ -18,21 +18,26 @@ folder, `AURA_API_BASE_URL` / `AURA_IMAGE_BASE_URL` to the mock, and unset
 
 ## Build (macOS)
 
-    packaging/build_mac.sh               # this Mac's kind
-    ARCH=arm64  packaging/build_mac.sh   # Apple silicon
-    ARCH=x86_64 packaging/build_mac.sh   # Intel; works on Apple silicon through Rosetta
+    packaging/build_mac.sh               # Universal: Apple silicon and Intel in one app
+    ARCH=arm64  packaging/build_mac.sh   # Apple silicon only (quicker, for testing)
+    ARCH=x86_64 packaging/build_mac.sh   # Intel only
 
-Produces `dist/Frame Tidy.app` and `dist/Frame Tidy.dmg` for one kind of Mac
-(Apple silicon about 315 MB / 135 MB, Intel about 390 MB / 165 MB). Build one
-kind, sign it, and move the dmg away before building the other: both use `dist/`.
+Produces `dist/Frame Tidy.app` and `dist/Frame Tidy.dmg`. The Universal app
+(about 700 MB installed) is the Apple-silicon and Intel builds joined by
+`packaging/make_universal.py`: each binary in both is merged with `lipo`, and
+OpenCV's helper libraries, which have different names in its two builds, are
+both kept. On an Apple-silicon Mac the Intel build runs through Rosetta
+(`softwareupdate --install-rosetta` once). The joined app is signed ad hoc so it
+runs locally; `sign_and_notarize.sh` replaces that with the real signature.
 
 ### Older Macs
 
 The app runs on macOS 12.3 and later, on Apple silicon and Intel. The build
 installs the locked libraries into a separate environment per kind of Mac
 (`build/venv-<arch>`) with `MACOSX_DEPLOYMENT_TARGET=12.0`, so each library's
-macOS 12 build is used, and then fails if any binary in the app is for the
-wrong kind of Mac or needs a newer macOS than `LSMinimumSystemVersion` in
+macOS 12 build is used. `packaging/check_app.py` then fails the build if any
+binary is for the wrong kind of Mac, if the main program does not hold every
+kind, or if anything needs a newer macOS than `LSMinimumSystemVersion` in
 `packaging/frame_tidy.spec` (12.3, set by SciPy).
 
 Some libraries dropped macOS 12 or Intel in later releases, so `pyproject.toml`
