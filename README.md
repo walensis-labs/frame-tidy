@@ -45,9 +45,13 @@ install the free Monterey update first (System Preferences > Software Update). T
 notarized by Apple, so the first time you open it macOS only asks you to
 confirm that you want to open an app downloaded from the internet.
 
-**Updating:** the app checks for a newer version at most once a day and shows a
-note when there is one. Download the new dmg and drag it into Applications
-again, replacing the old app. Your data stays where it is. If a new version
+**Updating:** from version 0.1.3 on, the Mac app updates itself. Once a day it
+looks for a new version and, when there is one, shows what's new with an
+**Install Update** button (or installs it by itself, if you allow that).
+**Help > Check for Updates…** looks right away. An update is installed only if
+it is signed by the same developer and with the project's update key. Versions
+before 0.1.3 need one manual install: download the new dmg and replace the app.
+Your data stays where it is. If a new version
 changes how data is saved, it first copies your saved files to a `backups`
 folder in the data folder; an older version will refuse to open data saved by
 a newer one rather than damage it.
