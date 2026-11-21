@@ -1,4 +1,5 @@
 import json
+from importlib.metadata import version as _version
 import threading
 from pathlib import Path
 from types import SimpleNamespace
@@ -31,6 +32,10 @@ class FakeApp:
                 SimpleNamespace(bbox=np.array([w * 0.1, h * 0.2, w * 0.3, h * 0.5]), normed_embedding=emb[0]),
             ]
         return [SimpleNamespace(bbox=np.array([w * 0.3, h * 0.3, w * 0.7, h * 0.7]), normed_embedding=emb[0])]
+
+
+# The installed version, which /api/version reports.
+APP_VERSION = _version("aura-mcp")
 
 
 def write_photo(path, width=800, height=600):
@@ -1622,9 +1627,9 @@ def test_version_when_github_cannot_be_reached(root, monkeypatch):
 
     first = client.get("/api/version")
     assert first.status_code == 200
-    assert first.json() == {"version": "0.1.0", "latest": None, "newer": False}
+    assert first.json() == {"version": APP_VERSION, "latest": None, "newer": False}
     review._update_thread.join(5)
-    assert client.get("/api/version").json() == {"version": "0.1.0", "latest": None, "newer": False}
+    assert client.get("/api/version").json() == {"version": APP_VERSION, "latest": None, "newer": False}
     # The failure is remembered for a day: no second try on the next page load.
     assert asked == [1]
     assert json.loads((root / "update-check.json").read_text())["latest"] is None
@@ -1632,18 +1637,18 @@ def test_version_when_github_cannot_be_reached(root, monkeypatch):
 
 def test_version_reports_a_newer_release(root, monkeypatch):
     monkeypatch.delenv("AURA_NO_UPDATE_CHECK")
-    review = Review(root, FaceMatcher(app=FakeApp()), update_check=lambda: "v0.2.0")
+    review = Review(root, FaceMatcher(app=FakeApp()), update_check=lambda: "v99.0.0")
     client = TestClient(review.app(), base_url="http://127.0.0.1")
     client.get("/api/version")
     review._update_thread.join(5)
-    assert client.get("/api/version").json() == {"version": "0.1.0", "latest": "v0.2.0", "newer": True}
+    assert client.get("/api/version").json() == {"version": APP_VERSION, "latest": "v99.0.0", "newer": True}
 
 
 def test_the_update_check_can_be_turned_off(root):
     asked = []
     review = Review(root, FaceMatcher(app=FakeApp()), update_check=lambda: asked.append(1) or "v9.0.0")
     client = TestClient(review.app(), base_url="http://127.0.0.1")
-    assert client.get("/api/version").json() == {"version": "0.1.0", "latest": None, "newer": False}
+    assert client.get("/api/version").json() == {"version": APP_VERSION, "latest": None, "newer": False}
     assert asked == [] and review._update_thread is None
 
 
