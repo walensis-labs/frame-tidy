@@ -103,6 +103,20 @@
   .faq details[open] summary::after { content: "–"; }
   .faq details p { color: var(--muted); padding-right: 32px; }
 
+  /* Screenshots */
+  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .shot { margin: 0; }
+  .shot.wide { grid-column: 1 / -1; }
+  .shot .window { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: #0a0a0c; box-shadow: var(--shadow); }
+  .shot:not(.wide) .window { aspect-ratio: 16 / 8; }
+  .shot:not(.wide) img { width: 100%; height: 100%; object-fit: contain; }
+  .shot .bar { display: flex; gap: 6px; padding: 10px 12px; background: #1c1b22; }
+  .shot .bar i { width: 10px; height: 10px; border-radius: 50%; background: #3a3943; }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot figcaption { color: var(--muted); font-size: .95rem; margin-top: 10px; }
+  .shot figcaption strong { color: var(--text); }
+  .shots-note { color: var(--muted); font-size: .85rem; margin-top: 18px; }
+
   .final { text-align: center; }
   .final .intro { margin-left: auto; margin-right: auto; }
 
@@ -113,7 +127,7 @@
   @media (max-width: 860px) {
     .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 16px; }
     .art { max-width: 340px; margin: 0 auto; }
-    .steps, .cards, .install { grid-template-columns: 1fr; }
+    .steps, .cards, .install, .shots { grid-template-columns: 1fr; }
     section { padding: 56px 0; }
     .top nav { display: none; }
   }
@@ -126,6 +140,7 @@
     <a class="brand" href="#"><span class="mark"><i></i></span>Frame Tidy</a>
     <nav aria-label="On this page">
       <a href="#how">How it works</a>
+      <a href="#look">Screenshots</a>
       <a href="#safe">Your privacy</a>
       <a href="#install">Install</a>
       <a href="#questions">Questions</a>
@@ -207,7 +222,33 @@
   </div>
 </section>
 
-<section id="safe">
+<section id="look">
+  <div class="wrap">
+    <p class="kicker">A look inside</p>
+    <h2>Everything in plain view.</h2>
+    <p class="intro">Every match starts out ticked. Untick anything that isn't them, and see exactly what will happen before you confirm.</p>
+    <div class="shots">
+      <figure class="shot wide">
+        <div class="window"><div class="bar"><i></i><i></i><i></i></div>
+          <img src="img/review.jpg" width="1512" height="804" loading="lazy" alt="Frame Tidy showing 34 photos of one person across 4 frames. 32 are ticked for removal and 2 are marked as not them. Badges show which photos are on more than one frame."></div>
+        <figcaption><strong>Check their photos.</strong> All of one person's photos, from every frame, in one place. Badges show photos that are on more than one frame.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="window">
+          <img src="img/people.jpg" width="960" height="350" loading="lazy" alt="The People view: six people found in the photos, each with a name and a photo count."></div>
+        <figcaption><strong>Everyone, grouped.</strong> Name the people you care about; the rest stay out of the way.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="window">
+          <img src="img/confirm.jpg" width="490" height="280" loading="lazy" alt="A confirmation dialog: Remove 32 photos from Aura? It lists the frames and how many photos leave each one, and says a copy of each is kept on this computer."></div>
+        <figcaption><strong>No surprises.</strong> You see which frames lose which photos, and that a copy of each is kept.</figcaption>
+      </figure>
+    </div>
+    <p class="shots-note">Shown with a test account and public test photos, blurred here for privacy. In the app you see your own photos clearly.</p>
+  </div>
+</section>
+
+<section class="alt" id="safe">
   <div class="wrap">
     <p class="kicker">Your privacy</p>
     <h2>Your photos never leave your Mac.</h2>
@@ -232,7 +273,7 @@
   </div>
 </section>
 
-<section class="alt" id="install">
+<section id="install">
   <div class="wrap install">
     <div>
       <p class="kicker">Install</p>
@@ -253,7 +294,7 @@
   </div>
 </section>
 
-<section id="questions">
+<section class="alt" id="questions">
   <div class="wrap narrow faq">
     <p class="kicker">Questions</p>
     <h2>Good to know</h2>
@@ -288,7 +329,7 @@
   </div>
 </section>
 
-<section class="alt final">
+<section class="final">
   <div class="wrap">
     <h2>Ready when you are.</h2>
     <p class="intro">Free, private, and it only does what you approve.</p>
