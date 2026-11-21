@@ -88,7 +88,12 @@ def join(arm: Path, intel: Path, out: Path) -> None:
                 or (rel.suffix == ".zip" and _zip_contents(arm_path) == _zip_contents(intel_path))
             )
             if not same:
-                problems.append(f"{rel}: differs between the two apps")
+                detail = ""
+                if rel.suffix == ".zip":
+                    a_zip, x_zip = _zip_contents(arm_path), _zip_contents(intel_path)
+                    names = sorted(n for n in set(a_zip) | set(x_zip) if a_zip.get(n) != x_zip.get(n))
+                    detail = f" ({len(names)} entries, e.g. {', '.join(names[:5])})"
+                problems.append(f"{rel}: differs between the two apps{detail}")
     for rel, link in sorted(intel_links.items()):
         if rel in arm_links:
             if arm_links[rel] != link:

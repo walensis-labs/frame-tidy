@@ -15,6 +15,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 ARCH="${ARCH:-universal}"
+# One exact Python for both halves of the Universal app: they must carry the
+# same standard library. uv downloads it if needed (never a system Python).
+PYTHON_VERSION=3.12.12
 export MACOSX_DEPLOYMENT_TARGET=12.0
 
 # Build the app for one kind of Mac into build/app-<arch>/Frame Tidy.app.
@@ -27,7 +30,8 @@ build_one() {
   esac
   local platform="$py_arch-apple-darwin" venv="build/venv-$arch"
   # The same locked versions as development, installed for that kind of Mac.
-  uv venv --allow-existing -q --python "cpython-3.12-macos-$py_arch-none" "$venv"
+  uv venv --allow-existing -q --managed-python --python "cpython-$PYTHON_VERSION-macos-$py_arch-none" "$venv"
+  "$venv/bin/python" -c "import platform,sys; v=platform.python_version(); sys.exit(0 if v == '$PYTHON_VERSION' else 'Python ' + v + ' in $venv, expected $PYTHON_VERSION: delete $venv')"
   mkdir -p build
   uv export --frozen --no-dev --group build --no-emit-project --no-hashes -q > "build/requirements-$arch.txt"
   uv pip install -q -p "$venv" --python-platform "$platform" -r "build/requirements-$arch.txt"
