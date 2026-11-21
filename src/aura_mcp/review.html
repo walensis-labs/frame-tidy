@@ -2133,7 +2133,7 @@ async function checkForUpdate(again) {
   if (info && info.newer) {
     const box = $('update'); box.textContent = '';
     box.append(`A newer version (${info.latest}) is available. You have ${info.version}.`,
-      el('a', { href: 'https://github.com/walensis-labs/frame-tidy/releases', target: '_blank', rel: 'noopener noreferrer', textContent: 'Get it' }),
+      el('a', { href: 'https://walensis-labs.github.io/frame-tidy/', target: '_blank', rel: 'noopener noreferrer', textContent: 'Get it' }),
       el('button', { className: 'linkish', type: 'button', textContent: 'Not now', onclick: () => { box.hidden = true; } }));
     box.hidden = false;
   } else if (info && !again) {

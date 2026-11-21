@@ -36,8 +36,9 @@ Applications. On other systems it runs from source.
 
 ## Install and first run
 
-**On a Mac:** download the `.dmg` file from the
-[latest release](https://github.com/walensis-labs/frame-tidy/releases/latest),
+**On a Mac:** download it from the
+[Frame Tidy page](https://walensis-labs.github.io/frame-tidy/) (or the `.dmg`
+file from the [latest release](https://github.com/walensis-labs/frame-tidy/releases/latest)),
 open it, and drag Frame Tidy into Applications. It works on Apple-silicon and
 Intel Macs. On macOS 12.0 to 12.2, macOS will say the app needs 12.3 or later:
 install the free Monterey update first (System Preferences > Software Update). The app is signed and
