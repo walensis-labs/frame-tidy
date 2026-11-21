@@ -24,14 +24,14 @@ flagged/*
 mock/
 
 # Review selections and reference face crops (personal data)
-selections/
-references/
+/selections/
+/references/
 
 # Everyone found in the photos: names, faces and face crops (personal data)
 /people/
 
 # Local copies of photos removed from a frame (personal data)
-removed/
+/removed/
 
 # iOS traffic capture output
 aura_capture*.jsonl
