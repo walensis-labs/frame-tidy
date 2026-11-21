@@ -32,6 +32,9 @@ if sys.platform == "win32":
 datas = [(str(ROOT / "src/aura_mcp/review.html"), "aura_mcp")]
 datas += collect_data_files("fastembed")
 datas += collect_data_files("segno")
+# Frozen, insightface looks for its data files in "objects" at the top of the
+# bundle; without them it prints "[Error] File not found: ...meanshape_68.pkl".
+datas += [(src, "objects") for src, dest in collect_data_files("insightface") if dest.endswith("objects")]
 # importlib.metadata.version("aura-mcp") is how the app knows its version
 # (GET /api/version and the update notice); without this it says 0.0.0.
 datas += copy_metadata("aura-mcp")
@@ -74,6 +77,6 @@ if sys.platform == "darwin":
             "CFBundleShortVersionString": VERSION,
             "CFBundleVersion": VERSION,
             "NSHighResolutionCapable": True,
-            "LSMinimumSystemVersion": "14.0",  # bundled libraries need 14 (checked with otool minos)
+            "LSMinimumSystemVersion": "12.3",  # SciPy needs 12.3; build_mac.sh checks every binary against this
         },
     )

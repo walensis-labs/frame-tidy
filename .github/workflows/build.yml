@@ -1,8 +1,12 @@
 # Builds the desktop app on a version tag (v1.2.3) and attaches it to a release.
 #
-# STATUS: neither job has been run on GitHub yet. The macOS build, signing and
-# notarization scripts were run locally on one Mac (2026-11-20). The Windows job has NOT been tested by anyone: expect to fix
-# it on the first run.
+# STATUS: no job has been run on GitHub yet. The macOS build, signing and
+# notarization scripts were run locally (Apple silicon, and Intel through
+# Rosetta, 2026-11-20). The Windows job has NOT been tested by anyone, so its
+# zip is kept as a build artifact and not attached to releases.
+#
+# macOS: one dmg for Apple silicon and one for Intel, both for macOS 12.3+
+# (see packaging/README.md, "Older Macs").
 #
 # macOS signing and notarization run when these are set in the repository
 # (Settings > Secrets and variables > Actions; see packaging/README.md):
@@ -25,14 +29,23 @@ permissions:
 
 jobs:
   macos:
-    runs-on: macos-14
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-14
+            label: apple-silicon
+          - arch: x86_64
+            runner: macos-15-intel
+            label: intel
+    runs-on: ${{ matrix.runner }}
     env:
+      ARCH: ${{ matrix.arch }}
       CAN_SIGN: ${{ secrets.APPLE_CERTIFICATE_P12 != '' && secrets.APPLE_ID != '' && secrets.APPLE_APP_PASSWORD != '' && vars.APPLE_TEAM_ID != '' }}
       RELEASE: ${{ startsWith(github.ref, 'refs/tags/') }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uv python install 3.12
       - name: Refuse to release unsigned
         if: env.RELEASE == 'true' && env.CAN_SIGN != 'true'
         run: |
@@ -56,14 +69,18 @@ jobs:
       - name: Remove the signing keychain
         if: always() && env.CAN_SIGN == 'true'
         run: packaging/ci_keychain.sh delete
+      - name: Name the dmg by version and kind of Mac
+        run: |
+          VERSION="$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')"
+          mv "dist/Frame Tidy.dmg" "dist/Frame-Tidy-$VERSION-${{ matrix.label }}.dmg"
       - uses: actions/upload-artifact@v4
         with:
-          name: frame-tidy-macos${{ env.CAN_SIGN != 'true' && '-unsigned' || '' }}
-          path: dist/Frame Tidy.dmg
+          name: frame-tidy-macos-${{ matrix.label }}${{ env.CAN_SIGN != 'true' && '-unsigned' || '' }}
+          path: dist/Frame-Tidy-*.dmg
       - if: env.RELEASE == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/Frame Tidy.dmg
+          files: dist/Frame-Tidy-*.dmg
 
   windows:
     # UNTESTED. Produces a zipped one-folder app (no installer).
@@ -80,7 +97,4 @@ jobs:
         with:
           name: frame-tidy-windows
           path: dist/Frame-Tidy-windows.zip
-      - if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/Frame-Tidy-windows.zip
+      # Not attached to releases until someone has tested it on Windows.

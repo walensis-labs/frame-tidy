@@ -1,6 +1,6 @@
 [project]
 name = "aura-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP server for finding and removing photos of a specific person from Aura frames"
 readme = "README.md"
 authors = [
@@ -13,9 +13,13 @@ dependencies = [
     "insightface>=2.1",
     "mcp[cli]>=2.3.0",
     "numpy>=2.5.5",
-    "onnxruntime>=1.32.0",
-    # 5.1 only ships macOS 15+ wheels; on macOS 14 it compiles from source.
-    "opencv-python-headless>=4.14,<5",
+    # The macOS app (Python 3.12) supports macOS 12 on Apple silicon and Intel. These are the
+    # newest releases with macOS 12 builds for both (later ones need 13 or 14).
+    # Checked 2026-11-20; see packaging/README.md, "Older Macs".
+    "onnxruntime>=1.19.2,<1.20 ; sys_platform == 'darwin' and python_version < '3.13'",
+    "onnxruntime>=1.32.0 ; sys_platform != 'darwin' or python_version >= '3.13'",
+    "opencv-python-headless>=4.10,<4.11 ; sys_platform == 'darwin' and python_version < '3.13'",
+    "opencv-python-headless>=4.14,<5 ; sys_platform != 'darwin' or python_version >= '3.13'",
     "python-dotenv>=1.2.4",
     "pywebview>=6.2.1",
     "scipy>=1.13",
@@ -39,6 +43,13 @@ build-backend = "uv_build"
 # copy of `cv2` on top of the headless build. Drop it: the headless package
 # provides the same module.
 override-dependencies = ["opencv-python ; sys_platform == 'never'"]
+# For the macOS app (see the note on the dependencies): onnx (needed by
+# insightface) 1.23 dropped macOS 12, and cryptography (needed by mcp) 49
+# dropped Intel Macs.
+constraint-dependencies = [
+    "onnx<1.23 ; sys_platform == 'darwin' and python_version < '3.13'",
+    "cryptography<49 ; sys_platform == 'darwin' and python_version < '3.13'",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

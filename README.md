@@ -18,8 +18,9 @@ Applications. On other systems it runs from source.
 
 ## What you need
 
-- A Mac with Apple silicon (M1 or later) and macOS 14 or later, for the
-  download. Windows and Linux can run it from source but are untested.
+- A Mac with macOS 12.3 (Monterey) or later, for the download. There is one
+  download for Apple-silicon Macs (M1 and later) and one for Intel Macs.
+  Windows and Linux can run it from source but are untested.
   Frame Tidy is not a phone app. A phone can be used once the computer has set
   things up (see "Using it from a phone").
 - Your Aura account email and password.
@@ -28,16 +29,18 @@ Applications. On other systems it runs from source.
   copy of each photo on the computer: one measured 12-megapixel photo came
   back at about 700 KB, so 3,000 photos is roughly 2 GB.
 - Time. Loading copies about 0.09 seconds per photo when 12 download at once,
-  so about 5 minutes for 3,000 photos. Reading the faces runs at about 50
-  photos a second on an Apple-silicon Mac, and slower on older machines. No
+  so about 5 minutes for 3,000 photos. Reading the faces runs at roughly 40
+  photos a second on an Apple-silicon Mac, and slower on Intel Macs. No
   one has timed a complete real load from start to finish yet, so treat these
   as rough.
 
 ## Install and first run
 
-**On a Mac:** download the `.dmg` file from the
+**On a Mac:** from the
 [latest release](https://github.com/walensis-labs/frame-tidy/releases/latest),
-open it, and drag Frame Tidy into Applications. The app is signed and
+download the `apple-silicon` dmg for an M1 or later Mac, or the `intel` dmg
+for an Intel Mac (Apple menu > About This Mac shows which: "Chip: Apple M…"
+or "Processor: … Intel …"). Open it and drag Frame Tidy into Applications. The app is signed and
 notarized by Apple, so the first time you open it macOS only asks you to
 confirm that you want to open an app downloaded from the internet.
 
@@ -352,8 +355,8 @@ user section covers:
   delete them; those show up under `failed` in the report.
 - **First use** of a face tool through MCP downloads the face model (~290 MB)
   to `~/.insightface` (or `AURA_MODEL_DIR`). Syncing is about 0.09 s per new
-  photo with 12 downloads at once. Face reading is about 50 photos a second on
-  an Apple-silicon Mac in the app's measurements. Both can be re-run to resume if
+  photo with 12 downloads at once. Face reading is roughly 40 photos a second on
+  an Apple-silicon Mac. Both can be re-run to resume if
   interrupted.
 - **Open-vocabulary search (`find_photos_in_frame`, and the "Found" tab in the
   review page)** uses a local CLIP model (ONNX via `fastembed`, ~610 MB, MIT-licensed, kept in

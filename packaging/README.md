@@ -18,9 +18,28 @@ folder, `AURA_API_BASE_URL` / `AURA_IMAGE_BASE_URL` to the mock, and unset
 
 ## Build (macOS)
 
-    packaging/build_mac.sh
+    packaging/build_mac.sh               # this Mac's kind
+    ARCH=arm64  packaging/build_mac.sh   # Apple silicon
+    ARCH=x86_64 packaging/build_mac.sh   # Intel; works on Apple silicon through Rosetta
 
-Produces `dist/Frame Tidy.app` and `dist/Frame Tidy.dmg` (about 340 MB and 140 MB).
+Produces `dist/Frame Tidy.app` and `dist/Frame Tidy.dmg` for one kind of Mac
+(Apple silicon about 315 MB / 135 MB, Intel about 390 MB / 165 MB). Build one
+kind, sign it, and move the dmg away before building the other: both use `dist/`.
+
+### Older Macs
+
+The app runs on macOS 12.3 and later, on Apple silicon and Intel. The build
+installs the locked libraries into a separate environment per kind of Mac
+(`build/venv-<arch>`) with `MACOSX_DEPLOYMENT_TARGET=12.0`, so each library's
+macOS 12 build is used, and then fails if any binary in the app is for the
+wrong kind of Mac or needs a newer macOS than `LSMinimumSystemVersion` in
+`packaging/frame_tidy.spec` (12.3, set by SciPy).
+
+Some libraries dropped macOS 12 or Intel in later releases, so `pyproject.toml`
+holds them back on macOS (Python 3.12): onnxruntime 1.19, opencv 4.10, onnx 1.22
+and cryptography 48. Development and tests use the same versions. Before
+raising any of them, check that the new release still has macOS 12 builds for
+both `arm64` and `x86_64`, or raise the minimum macOS for everyone.
 The face model is not inside: InsightFace downloads it into `~/.insightface`
 on first use. The script fails if any `.onnx` file ends up in the bundle.
 PyInstaller ad-hoc signs the app, which is enough to run on the machine that built it;
